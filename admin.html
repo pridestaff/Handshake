@@ -1,12 +1,9 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex" />
-    <title>Admin Control Center | Northstar Talent</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" /><title>Admin Control Center | Northstar Talent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
@@ -20,13 +17,8 @@
     </header>
 
     <main class="admin-main">
-      <!-- Loading Gate -->
-      <section class="admin-gate" data-admin-loading>
-        <p class="eyebrow">Admin portal</p>
-        <h1>Verifying permissions…</h1>
-      </section>
+      <section class="admin-gate" data-admin-loading><p class="eyebrow">Admin portal</p><h1>Verifying permissions…</h1></section>
       
-      <!-- Login Gate -->
       <section class="admin-gate" data-admin-login hidden>
         <p class="eyebrow">Admin portal</p>
         <h1>Sign in to manage agency</h1>
@@ -39,7 +31,6 @@
         </form>
       </section>
       
-      <!-- Denied Gate -->
       <section class="admin-gate" data-admin-denied hidden>
         <p class="eyebrow">Admin portal</p>
         <h1>Access Denied</h1>
@@ -47,7 +38,7 @@
         <button class="button button-text" data-admin-sign-out>Sign out</button>
       </section>
 
-      <!-- Main Dashboard View: All Sections Stacked Vertically -->
+      <!-- Main Dashboard View -->
       <section data-admin-panel hidden>
         <div class="admin-intro">
           <div>
@@ -83,7 +74,7 @@
             </div>
           </div>
 
-          <!-- 3. Registered Candidates & Users (Excludes Admins) -->
+          <!-- 3. Registered Candidates (Excludes Admins) -->
           <div class="admin-card vertical-section">
             <div class="section-card-header">
               <h2>3. Registered Candidates & Users <span data-user-count></span></h2>
@@ -144,11 +135,11 @@
             </label>
           </div>
 
-          <label>Custom Redirection URL <span class="small-label">Optional — Registered candidates redirect here immediately; new candidates after submitting application</span>
+          <label>Custom Redirection URL <span class="small-label">Optional — Will redirect here after applying</span>
             <input name="redirect_url" type="url" placeholder="e.g. https://company-careers-portal.com/job/102" />
           </label>
 
-          <label>Role Scope & Mission (Overview)<textarea required name="description" rows="3" placeholder="Concise summary of why the role exists and its main goals..."></textarea></label>
+          <label>Role Scope & Mission (Overview)<textarea required name="description" rows="3" placeholder="Concise summary of why the role exists..."></textarea></label>
           <label>Key Responsibilities<textarea name="responsibilities" rows="4" placeholder="• Day-to-day deliverables and core workflows..."></textarea></label>
           <label>Candidate Requirements & Qualifications<textarea name="requirements" rows="4" placeholder="• Required skills, years of experience, and degrees..."></textarea></label>
 
