@@ -288,6 +288,44 @@ async function toggleSaveJob(jobId, btn) {
   }
 }
 
+// ----------------------------------------------------
+// CONTACT FORM SUBMISSION (LIVE SUPABASE INTEGRATION)
+// ----------------------------------------------------
+function setupContactForm() {
+  const form = document.querySelector("[data-contact-form]");
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = form.querySelector(".form-message");
+    const submitBtn = form.querySelector('[type="submit"]');
+
+    submitBtn.disabled = true;
+    showMessage(msg, "Sending your message...");
+
+    const payload = {
+      name: form.elements.name.value.trim(),
+      email: form.elements.email.value.trim(),
+      interest: form.elements.interest.value,
+      message: form.elements.message.value.trim()
+    };
+
+    const { error } = await supabaseClient.from("contact_messages").insert(payload);
+    submitBtn.disabled = false;
+
+    if (error) {
+      showMessage(msg, "Failed to send: " + error.message, true);
+    } else {
+      form.reset();
+      showMessage(msg, "Thank you! Your message has been sent successfully.");
+    }
+  });
+}
+
+// ----------------------------------------------------
+// PAGE WORKFLOWS
+// ----------------------------------------------------
+
 async function initHomePage() {
   const container = document.querySelector("[data-featured-jobs]");
   if (!container) return;
@@ -621,20 +659,24 @@ function setupAdminTabs() {
 }
 
 async function renderAdminDashboard() {
-  const [jobsRes, appsRes, usersRes] = await Promise.all([
+  const [jobsRes, appsRes, usersRes, inquiriesRes] = await Promise.all([
     supabaseClient.from("jobs").select("*").order("created_at", { ascending: false }),
     supabaseClient.from("applications").select("*, jobs(title)").order("created_at", { ascending: false }),
-    supabaseClient.from("profiles").select("*").order("created_at", { ascending: false })
+    supabaseClient.from("profiles").select("*").order("created_at", { ascending: false }),
+    supabaseClient.from("contact_messages").select("*").order("created_at", { ascending: false })
   ]);
 
   const jobs = jobsRes.data || [];
   const apps = appsRes.data || [];
   const users = usersRes.data || [];
+  const inquiries = inquiriesRes.data || [];
 
   document.querySelector("[data-job-count]").textContent = `(${jobs.length})`;
   document.querySelector("[data-application-count]").textContent = `(${apps.length})`;
   document.querySelector("[data-user-count]").textContent = `(${users.length})`;
+  document.querySelector("[data-inquiry-count]").textContent = `(${inquiries.length})`;
 
+  // 1. Jobs List
   const jobsList = document.querySelector("[data-admin-jobs]");
   jobsList.innerHTML = jobs.length ? jobs.map((j) => `
     <article class="admin-job">
@@ -649,6 +691,7 @@ async function renderAdminDashboard() {
     </article>
   `).join("") : '<p class="empty-admin">No jobs posted yet.</p>';
 
+  // 2. Applications List
   const appsList = document.querySelector("[data-applications]");
   appsList.innerHTML = apps.length ? apps.map((a) => `
     <article class="application">
@@ -670,6 +713,7 @@ async function renderAdminDashboard() {
     </article>
   `).join("") : '<p class="empty-admin">No applications received yet.</p>';
 
+  // 3. Registered Users List
   const usersList = document.querySelector("[data-admin-users]");
   usersList.innerHTML = users.length ? users.map((u) => `
     <article class="admin-job">
@@ -683,6 +727,19 @@ async function renderAdminDashboard() {
       </div>
     </article>
   `).join("") : '<p class="empty-admin">No registered users found.</p>';
+
+  // 4. Contact Inquiries List
+  const inquiriesList = document.querySelector("[data-admin-inquiries]");
+  inquiriesList.innerHTML = inquiries.length ? inquiries.map((m) => `
+    <article class="application">
+      <h3>${escapeHtml(m.name)} — <span style="font-weight: 400; color: var(--peach);">${escapeHtml(m.interest)}</span></h3>
+      <p>Email: <a href="mailto:${escapeHtml(m.email)}" style="font-weight:600; color:var(--ink);">${escapeHtml(m.email)}</a> · ${new Date(m.created_at).toLocaleDateString()}</p>
+      <p style="margin-top:6px; color:var(--ink); font-size:13px; background:var(--cream); padding:10px; border-left:3px solid var(--peach);">${escapeHtml(m.message)}</p>
+      <div class="application-actions" style="justify-content: flex-end;">
+        <button class="delete-job" onclick="deleteInquiry('${m.id}')">Delete Message</button>
+      </div>
+    </article>
+  `).join("") : '<p class="empty-admin">No contact messages received yet.</p>';
 }
 
 window.viewResume = async (path) => {
@@ -712,6 +769,13 @@ window.toggleUserBlock = async (id, isBlocked) => {
   renderAdminDashboard();
 };
 
+window.deleteInquiry = async (id) => {
+  if (confirm("Delete this contact message?")) {
+    await supabaseClient.from("contact_messages").delete().eq("id", id);
+    renderAdminDashboard();
+  }
+};
+
 document.addEventListener("DOMContentLoaded", async () => {
   document.querySelectorAll("[data-year]").forEach((y) => y.textContent = new Date().getFullYear());
   document.querySelectorAll("[data-close-dialog]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
@@ -722,6 +786,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await refreshCurrentUser();
   setupAuthModal();
   setupApplicationModal();
+  setupContactForm();
 
   document.querySelectorAll("[data-open-auth]").forEach((btn) => {
     btn.addEventListener("click", async () => {
