@@ -10,9 +10,10 @@
     <script src="supabase-config.js" defer></script>
     <script src="script.js" defer></script>
   </head>
-  <body data-page="profile" class="admin-body">
-    <header class="site-header" style="background: white; border-bottom: 1px solid var(--line);">
+  <body data-page="profile">
+    <header class="site-header">
       <a class="brand" href="index.html"><span class="brand-mark">N</span>Northstar <em>Talent</em></a>
+      <button class="menu-button" aria-label="Open navigation" aria-expanded="false">Menu</button>
       <nav class="main-nav">
         <a href="index.html">Home</a>
         <a href="jobs.html">Browse Jobs</a>
@@ -21,7 +22,7 @@
       </nav>
     </header>
 
-    <main class="admin-main">
+    <main class="section-wrap" style="padding-top: 40px; padding-bottom: 80px;">
       <div class="admin-intro">
         <div>
           <p class="eyebrow">Candidate Portal</p>
@@ -29,17 +30,17 @@
           <p style="color: var(--muted); margin: 0;" data-profile-email></p>
         </div>
         <div class="admin-actions">
-          <a class="button button-primary" href="jobs.html">Search Jobs <span>→</span></a>
+          <a class="button button-primary" href="jobs.html">Browse Jobs <span>→</span></a>
         </div>
       </div>
 
-      <div class="admin-grid" style="grid-template-columns: 1.1fr 0.9fr;">
-        <!-- Left: Application Status Tracker & Saved Jobs -->
+      <div class="admin-grid" style="grid-template-columns: 1.05fr 0.95fr;">
+        <!-- Left: Applications & Saved Roles -->
         <div>
           <div class="admin-card">
             <h2>My Applications <span data-candidate-apps-count></span></h2>
             <div class="application-list" data-candidate-applications>
-              <p class="empty-admin">Loading your applications...</p>
+              <p class="empty-admin">Loading applications...</p>
             </div>
           </div>
 
@@ -51,28 +52,89 @@
           </div>
         </div>
 
-        <!-- Right: Candidate Profile Details -->
+        <!-- Right: Profile Builder with Tag Chips -->
         <div>
           <div class="admin-card">
             <h2>Profile Details</h2>
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">Complete your career profile. Select your key skills and industries below.</p>
+            
             <form class="contact-form" style="padding: 0;" data-profile-form>
-              <label>Full Name<input required name="full_name" /></label>
-              <label>Phone Number<input required name="phone" /></label>
-              <label>Key Skills (comma separated)<input name="skills" placeholder="e.g. Figma, React, Financial Analysis" /></label>
-              <label>Experience Summary<textarea name="experience" rows="3" placeholder="Brief summary of your background"></textarea></label>
               <div class="form-two">
-                <label>Preferred Location<input name="preferred_location" placeholder="e.g. Remote / London" /></label>
-                <label>Salary Expectation<input name="salary_expectations" placeholder="e.g. $80k - $95k" /></label>
+                <label>First Name<input required name="first_name" /></label>
+                <label>Last Name<input required name="last_name" /></label>
               </div>
-              <label>Work Authorization<input name="work_authorization" placeholder="e.g. Citizen, Green Card, Work Visa" /></label>
-              <label>Update CV <span class="small-label">PDF / DOC</span><input type="file" name="resume_file" accept=".pdf,.doc,.docx" /></label>
-              <div id="current-cv-link" style="margin-top: -8px; font-size: 13px;"></div>
-              <button class="button button-primary" type="submit">Save Profile <span>→</span></button>
+
+              <div class="form-two">
+                <label>Mobile Number<input required name="phone" /></label>
+                <label>Gender
+                  <select name="gender">
+                    <option value="">Select gender</option>
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Non-binary">Non-binary</option>
+                    <option value="Other">Other</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                </label>
+              </div>
+
+              <!-- Selectable Skill Tags -->
+              <div class="tags-container">
+                <label style="font-size: 13px; font-weight: 700;">Key Skills (Select or type below)</label>
+                <div class="tag-cloud" data-skill-chips>
+                  <span class="tag-chip" data-tag="Figma"><span class="check-icon">✓</span> Figma</span>
+                  <span class="tag-chip" data-tag="React"><span class="check-icon">✓</span> React</span>
+                  <span class="tag-chip" data-tag="JavaScript"><span class="check-icon">✓</span> JavaScript</span>
+                  <span class="tag-chip" data-tag="Node.js"><span class="check-icon">✓</span> Node.js</span>
+                  <span class="tag-chip" data-tag="SQL / PostgreSQL"><span class="check-icon">✓</span> SQL</span>
+                  <span class="tag-chip" data-tag="Python"><span class="check-icon">✓</span> Python</span>
+                  <span class="tag-chip" data-tag="Product Management"><span class="check-icon">✓</span> Product Management</span>
+                  <span class="tag-chip" data-tag="Financial Modeling"><span class="check-icon">✓</span> Financial Modeling</span>
+                  <span class="tag-chip" data-tag="Sales & BD"><span class="check-icon">✓</span> Sales & BD</span>
+                  <span class="tag-chip" data-tag="Marketing"><span class="check-icon">✓</span> Marketing</span>
+                  <span class="tag-chip" data-tag="Human Resources"><span class="check-icon">✓</span> Human Resources</span>
+                  <span class="tag-chip" data-tag="Customer Support"><span class="check-icon">✓</span> Customer Support</span>
+                </div>
+                <input name="skills" placeholder="Add custom skills separated by commas..." style="margin-top: 8px;" />
+              </div>
+
+              <!-- Selectable Industry Tags -->
+              <div class="tags-container">
+                <label style="font-size: 13px; font-weight: 700;">Preferred Industries</label>
+                <div class="tag-cloud" data-industry-chips>
+                  <span class="tag-chip" data-tag="Technology & Software"><span class="check-icon">✓</span> Technology</span>
+                  <span class="tag-chip" data-tag="Finance & Banking"><span class="check-icon">✓</span> Finance & Banking</span>
+                  <span class="tag-chip" data-tag="Healthcare"><span class="check-icon">✓</span> Healthcare</span>
+                  <span class="tag-chip" data-tag="E-commerce"><span class="check-icon">✓</span> E-commerce</span>
+                  <span class="tag-chip" data-tag="Education & EdTech"><span class="check-icon">✓</span> EdTech</span>
+                  <span class="tag-chip" data-tag="Design & Creative"><span class="check-icon">✓</span> Design</span>
+                </div>
+                <input name="education" placeholder="Highest Education (e.g. B.Tech in CS)" style="margin-top: 8px;" />
+              </div>
+
+              <div class="form-two">
+                <label>Preferred Location<input name="preferred_location" placeholder="e.g. Remote / Bengaluru" /></label>
+                <label>Salary Expectations<input name="salary_expectations" placeholder="e.g. $80,000 - $100,000" /></label>
+              </div>
+
+              <label>Work Authorization<input name="work_authorization" placeholder="e.g. Citizen, Work Visa, Permanent Resident" /></label>
+              <label>Experience Summary<textarea name="experience" rows="3" placeholder="Brief summary of your background and achievements..."></textarea></label>
+              
+              <label>Resume / CV <span class="small-label">PDF or DOC (Up to 5 MB)</span><input type="file" name="resume_file" accept=".pdf,.doc,.docx" /></label>
+              <div id="current-cv-link" style="margin-top: -6px; font-size: 13px;"></div>
+
+              <button class="button button-primary" type="submit" style="margin-top: 10px;">Save Profile <span>→</span></button>
               <p class="form-message" role="status"></p>
             </form>
           </div>
         </div>
       </div>
     </main>
+
+    <footer class="site-footer">
+      <a class="brand" href="index.html"><span class="brand-mark">N</span>Northstar <em>Talent</em></a>
+      <p>Thoughtful recruitment for people and teams.</p>
+      <div><span>© <span data-year></span> Northstar Talent</span></div>
+    </footer>
   </body>
 </html>
