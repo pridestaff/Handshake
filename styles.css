@@ -56,7 +56,7 @@ h1 i, h2 i { color: var(--peach); font-weight: 600; }
 .hero-note { position: absolute; bottom: 70px; left: 12%; color: var(--ink); background: var(--paper); padding: 14px 20px; font-family: var(--serif); font-size: 17px; line-height: 1.25; transform: rotate(-5deg); box-shadow: 6px 6px 0 rgba(23,59,59,.1); }
 .dot-grid { position: absolute; left: 13%; top: 80px; width: 90px; height: 60px; background-image: radial-gradient(var(--ink) 1.5px, transparent 1.5px); background-size: 12px 12px; opacity: .6; }
 
-/* Sections */
+/* Public Landing Sections */
 .section-wrap { max-width: 1180px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
 .intro-section { padding-top: 95px; padding-bottom: 95px; }
 .split-heading { display: grid; grid-template-columns: 1fr .72fr; gap: 80px; align-items: end; }
@@ -74,85 +74,61 @@ h2 { font-size: clamp(26px, 3.2vw, 40px); margin-bottom: 18px; }
 .card-link { position: absolute; bottom: 24px; right: 28px; font-size: 13px; font-weight: 700; }
 .card-link b { font-size: 16px; padding-left: 6px; }
 
-/* Featured Section on Homepage */
+/* Job Board & Filters */
 .featured-section { background: var(--ink); color: white; padding: 80px 0 85px; }
 .featured-section .eyebrow { color: var(--yellow); }
 .section-heading-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
 .section-heading-row h2 { margin: 0; }
+.page-banner { background: var(--cream); padding: 48px 0 36px; border-bottom: 1px solid var(--line); }
+.filters-bar { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; margin-top: 26px; }
+.filter-field label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; color: var(--muted); }
+.filter-field input, .filter-field select { width: 100%; padding: 9px 11px; border: 1px solid var(--line); background: white; color: var(--ink); outline-color: var(--peach); font-size: 13px; }
 
-/* =========================================================================
-   JOBS.HTML MAIN SECTION (MATCHING FEATURED SECTION BACKGROUND)
-   ========================================================================= */
-body[data-page="jobs"] main {
-  background: var(--ink);
-  color: white;
+/* Tag Chips */
+.tags-container { margin-top: 6px; margin-bottom: 12px; }
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
 }
+.tag-chip:hover { border-color: var(--peach); transform: translateY(-1px); }
+.tag-chip.active { background: var(--ink); color: white; border-color: var(--ink); }
+.tag-chip .check-icon { font-size: 9px; opacity: 0; }
+.tag-chip.active .check-icon { opacity: 1; }
 
-body[data-page="jobs"] .page-banner {
-  background: transparent;
-  padding: 55px 0 35px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-body[data-page="jobs"] .page-banner .eyebrow {
-  color: var(--yellow);
-}
-
-body[data-page="jobs"] .page-banner h1 {
-  color: white;
-}
-
-body[data-page="jobs"] .page-banner .hero-text {
-  color: #d5dfdc;
-}
-
-body[data-page="jobs"] .filter-field label {
-  color: #b4c7c5;
-}
-
-body[data-page="jobs"] .filter-field input,
-body[data-page="jobs"] .filter-field select {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: white;
-}
-
-body[data-page="jobs"] .filter-field input::placeholder {
-  color: #9ab3b1;
-}
-
-body[data-page="jobs"] .filter-field select option {
-  background: var(--ink);
-  color: white;
-}
-
-body[data-page="jobs"] .tag-chip {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.25);
-  color: white;
-}
-
-body[data-page="jobs"] .tag-chip:hover {
-  border-color: var(--peach);
-  background: rgba(255, 255, 255, 0.2);
-}
-
-body[data-page="jobs"] .tag-chip.active {
-  background: var(--peach);
-  border-color: var(--peach);
-  color: white;
-}
-
-/* Default Job Cards (White on Dark Ink) */
+/* Job Cards */
 .job-list { display: grid; gap: 0; }
 .job-card { display: grid; grid-template-columns: minmax(0, 1.25fr) 1fr auto auto; align-items: center; gap: 16px; padding: 20px 2px; border-top: 1px solid rgba(255,255,255,.2); color: white; transition: padding .2s; }
 .job-card:last-child { border-bottom: 1px solid rgba(255,255,255,.2); }
 .job-card:hover { padding-left: 8px; }
+.dark-cards .job-card { color: var(--ink); border-color: var(--line); }
+.dark-cards .job-meta { color: var(--muted); }
+.dark-cards .job-detail { color: var(--ink); font-weight: 600; font-size: 13px; }
+.dark-cards .job-arrow { border-color: var(--ink); color: var(--ink); }
+
 .job-title { margin: 0; font-family: var(--serif); font-size: 20px; letter-spacing: -.3px; }
 .job-meta { margin: 2px 0 0; font-size: 12px; color: #b4c7c5; }
 .job-detail { font-size: 13px; color: #d5dfdc; }
 .job-arrow { display: grid; place-items: center; height: 34px; width: 34px; border: 1px solid rgba(255,255,255,.6); border-radius: 50%; font-size: 16px; background: transparent; }
 .job-save-btn { border: 0; background: transparent; font-size: 16px; color: var(--peach); cursor: pointer; padding: 4px; }
+.status-pill { display: inline-block; padding: 3px 8px; font-size: 10px; font-weight: 700; border-radius: 12px; text-transform: uppercase; }
+.status-received { background: #e2e8f0; color: #475569; }
+.status-shortlisted { background: #fef3c7; color: #92400e; }
+.status-interview { background: #e0e7ff; color: #3730a3; }
+.status-hired { background: #dcfce7; color: #166534; }
+.status-rejected { background: #fee2e2; color: #991b1b; }
+.featured-badge { font-size: 9px; background: var(--yellow); color: var(--ink); padding: 2px 5px; font-weight: 700; border-radius: 2px; margin-left: 6px; }
 
 /* Contact Section & Form */
 .about-section { display: grid; grid-template-columns: .9fr 1fr; gap: 8%; align-items: center; padding-top: 95px; padding-bottom: 95px; }
@@ -200,12 +176,14 @@ blockquote { margin: 10px auto 18px; max-width: 700px; font-family: var(--serif)
 }
 
 /* =========================================================================
-   DASHBOARD TYPOGRAPHY FIXES (ADMIN & CANDIDATE PROFILE PANELS)
+   STRICT DASHBOARD TYPOGRAPHY FIXES (ADMIN & CANDIDATE PROFILE PANELS)
    ========================================================================= */
+
 .admin-body { background: #f4f5ef; }
 .admin-header { max-width: 1240px; margin: auto; padding: 20px 28px; display: flex; justify-content: space-between; align-items: center; }
 .admin-main { max-width: 1180px; margin: 24px auto 70px; padding: 0 28px; }
 
+/* Dashboard Titles (Top of Page) */
 .admin-intro h1,
 .admin-gate h1,
 .profile-main-title {
@@ -222,6 +200,7 @@ blockquote { margin: 10px auto 18px; max-width: 700px; font-family: var(--serif)
 .profile-header-bar { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; }
 .admin-actions { display: flex; align-items: center; gap: 10px; }
 
+/* Card Section Header Containers */
 .section-card-header {
   display: flex;
   justify-content: space-between;
@@ -231,6 +210,7 @@ blockquote { margin: 10px auto 18px; max-width: 700px; font-family: var(--serif)
   margin-bottom: 14px;
 }
 
+/* Strictly Enforced 15px Sans-Serif Font for All Card Section Headers */
 .admin-card h2,
 .profile-card h2,
 .vertical-section h2,
@@ -257,6 +237,7 @@ blockquote { margin: 10px auto 18px; max-width: 700px; font-family: var(--serif)
   margin-left: 4px;
 }
 
+/* Card Wrappers */
 .admin-card,
 .profile-card {
   padding: 20px 22px;
@@ -279,6 +260,7 @@ blockquote { margin: 10px auto 18px; max-width: 700px; font-family: var(--serif)
   align-items: start;
 }
 
+/* Row Items inside Admin / Profile Cards */
 .admin-job, 
 .application {
   padding: 12px 0;
@@ -320,6 +302,7 @@ blockquote { margin: 10px auto 18px; max-width: 700px; font-family: var(--serif)
 .form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .form-message.is-error { color: #a54836; }
 
+/* Action Buttons */
 .admin-item-actions {
   display: flex;
   align-items: center;
