@@ -10,8 +10,8 @@
     <script src="supabase-config.js" defer></script>
     <script src="script.js" defer></script>
   </head>
-  <body data-page="profile">
-    <header class="site-header">
+  <body data-page="profile" class="admin-body">
+    <header class="site-header" style="background: var(--paper); border-bottom: 1px solid var(--line);">
       <a class="brand" href="index.html"><span class="brand-mark">N</span>Northstar <em>Talent</em></a>
       <button class="menu-button" aria-label="Open navigation" aria-expanded="false">Menu</button>
       <nav class="main-nav">
@@ -22,112 +22,197 @@
       </nav>
     </header>
 
-    <main class="section-wrap" style="padding-top: 40px; padding-bottom: 80px;">
-      <div class="admin-intro">
+    <main class="section-wrap" style="padding-top: 36px; padding-bottom: 80px;">
+      <!-- Dashboard Top Summary Header -->
+      <div class="profile-header-bar">
         <div>
-          <p class="eyebrow">Candidate Portal</p>
-          <h1 data-profile-name>My Dashboard</h1>
-          <p style="color: var(--muted); margin: 0;" data-profile-email></p>
+          <p class="eyebrow" style="margin-bottom: 6px;">Candidate Portal</p>
+          <h1 data-profile-name class="profile-main-title">My Dashboard</h1>
+          <p style="color: var(--muted); margin: 0; font-size: 14px;" data-profile-email></p>
         </div>
         <div class="admin-actions">
-          <a class="button button-primary" href="jobs.html">Browse Jobs <span>→</span></a>
+          <a class="button button-primary" href="jobs.html">Browse Open Roles <span>→</span></a>
         </div>
       </div>
 
-      <div class="admin-grid" style="grid-template-columns: 1.05fr 0.95fr;">
-        <!-- Left: Applications & Saved Roles -->
-        <div>
-          <div class="admin-card">
-            <h2>My Applications <span data-candidate-apps-count></span></h2>
+      <!-- Main Layout: Applications on Left, Profile Details on Right -->
+      <div class="profile-dashboard-grid">
+        
+        <!-- Left Column: Applications & Saved Roles -->
+        <div class="profile-col-left">
+          <!-- Applications Tracker -->
+          <div class="admin-card profile-card">
+            <div class="section-card-header">
+              <h2 class="card-title">My Applications <span data-candidate-apps-count class="count-badge">(0)</span></h2>
+            </div>
             <div class="application-list" data-candidate-applications>
               <p class="empty-admin">Loading applications...</p>
             </div>
           </div>
 
-          <div class="admin-card" style="margin-top: 24px;">
-            <h2>Saved Roles <span data-candidate-saved-count></span></h2>
+          <!-- Saved Roles -->
+          <div class="admin-card profile-card" style="margin-top: 20px;">
+            <div class="section-card-header">
+              <h2 class="card-title">Saved Roles <span data-candidate-saved-count class="count-badge">(0)</span></h2>
+            </div>
             <div class="application-list" data-candidate-saved>
               <p class="empty-admin">No saved roles yet.</p>
             </div>
           </div>
         </div>
 
-        <!-- Right: Profile Builder with Tag Chips -->
-        <div>
-          <div class="admin-card">
-            <h2>Profile Details</h2>
-            <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">Complete your career profile. Select your key skills and industries below.</p>
+        <!-- Right Column: Profile Details (View & Edit Modes) -->
+        <div class="profile-col-right">
+          <div class="admin-card profile-card">
             
-            <form class="contact-form" style="padding: 0;" data-profile-form>
-              <div class="form-two">
-                <label>First Name<input required name="first_name" /></label>
-                <label>Last Name<input required name="last_name" /></label>
+            <!-- 1. READ-ONLY VIEW MODE (Visible when profile is completed) -->
+            <div id="profile-view-mode">
+              <div class="section-card-header">
+                <h2 class="card-title">Profile Details</h2>
+                <button type="button" class="btn-ctrl btn-ctrl-primary" id="btn-edit-profile">Edit Details</button>
               </div>
 
-              <div class="form-two">
-                <label>Mobile Number<input required name="phone" /></label>
-                <label>Gender
-                  <select name="gender">
-                    <option value="">Select gender</option>
-                    <option value="Female">Female</option>
-                    <option value="Male">Male</option>
-                    <option value="Non-binary">Non-binary</option>
-                    <option value="Other">Other</option>
-                    <option value="Prefer not to say">Prefer not to say</option>
-                  </select>
-                </label>
+              <!-- Completion Prompt for Empty/Incomplete Profiles -->
+              <div id="profile-incomplete-banner" class="profile-notice-box" hidden>
+                <strong>Complete your profile details</strong>
+                <p>Add your skills, experience, and location preferences to help recruiters match you with relevant roles.</p>
+                <button type="button" class="btn-ctrl btn-ctrl-primary" id="btn-complete-profile" style="margin-top: 8px;">Complete Profile Now <span>→</span></button>
               </div>
 
-              <!-- Selectable Skill Tags -->
-              <div class="tags-container">
-                <label style="font-size: 13px; font-weight: 700;">Key Skills (Select or type below)</label>
-                <div class="tag-cloud" data-skill-chips>
-                  <span class="tag-chip" data-tag="Figma"><span class="check-icon">✓</span> Figma</span>
-                  <span class="tag-chip" data-tag="React"><span class="check-icon">✓</span> React</span>
-                  <span class="tag-chip" data-tag="JavaScript"><span class="check-icon">✓</span> JavaScript</span>
-                  <span class="tag-chip" data-tag="Node.js"><span class="check-icon">✓</span> Node.js</span>
-                  <span class="tag-chip" data-tag="SQL / PostgreSQL"><span class="check-icon">✓</span> SQL</span>
-                  <span class="tag-chip" data-tag="Python"><span class="check-icon">✓</span> Python</span>
-                  <span class="tag-chip" data-tag="Product Management"><span class="check-icon">✓</span> Product Management</span>
-                  <span class="tag-chip" data-tag="Financial Modeling"><span class="check-icon">✓</span> Financial Modeling</span>
-                  <span class="tag-chip" data-tag="Sales & BD"><span class="check-icon">✓</span> Sales & BD</span>
-                  <span class="tag-chip" data-tag="Marketing"><span class="check-icon">✓</span> Marketing</span>
-                  <span class="tag-chip" data-tag="Human Resources"><span class="check-icon">✓</span> Human Resources</span>
-                  <span class="tag-chip" data-tag="Customer Support"><span class="check-icon">✓</span> Customer Support</span>
+              <!-- Profile Details Key-Value Display -->
+              <div class="profile-view-grid" id="profile-display-data">
+                <div class="profile-item">
+                  <span class="profile-lbl">Full Name</span>
+                  <span class="profile-val" data-view-name>—</span>
                 </div>
-                <input name="skills" placeholder="Add custom skills separated by commas..." style="margin-top: 8px;" />
-              </div>
-
-              <!-- Selectable Industry Tags -->
-              <div class="tags-container">
-                <label style="font-size: 13px; font-weight: 700;">Preferred Industries</label>
-                <div class="tag-cloud" data-industry-chips>
-                  <span class="tag-chip" data-tag="Technology & Software"><span class="check-icon">✓</span> Technology</span>
-                  <span class="tag-chip" data-tag="Finance & Banking"><span class="check-icon">✓</span> Finance & Banking</span>
-                  <span class="tag-chip" data-tag="Healthcare"><span class="check-icon">✓</span> Healthcare</span>
-                  <span class="tag-chip" data-tag="E-commerce"><span class="check-icon">✓</span> E-commerce</span>
-                  <span class="tag-chip" data-tag="Education & EdTech"><span class="check-icon">✓</span> EdTech</span>
-                  <span class="tag-chip" data-tag="Design & Creative"><span class="check-icon">✓</span> Design</span>
+                <div class="profile-item">
+                  <span class="profile-lbl">Mobile Number</span>
+                  <span class="profile-val" data-view-phone>—</span>
                 </div>
-                <input name="education" placeholder="Highest Education (e.g. B.Tech in CS)" style="margin-top: 8px;" />
+                <div class="profile-item">
+                  <span class="profile-lbl">Gender</span>
+                  <span class="profile-val" data-view-gender>—</span>
+                </div>
+                <div class="profile-item">
+                  <span class="profile-lbl">Preferred Location</span>
+                  <span class="profile-val" data-view-location>—</span>
+                </div>
+                <div class="profile-item">
+                  <span class="profile-lbl">Salary Expectation</span>
+                  <span class="profile-val" data-view-salary>—</span>
+                </div>
+                <div class="profile-item">
+                  <span class="profile-lbl">Work Authorization</span>
+                  <span class="profile-val" data-view-auth>—</span>
+                </div>
+                <div class="profile-item" style="grid-column: 1 / -1;">
+                  <span class="profile-lbl">Highest Education</span>
+                  <span class="profile-val" data-view-education>—</span>
+                </div>
+                <div class="profile-item" style="grid-column: 1 / -1;">
+                  <span class="profile-lbl">Skills & Industry Tags</span>
+                  <div class="profile-tag-list" data-view-skills>
+                    <span style="color: var(--muted); font-size: 13px;">No skills added yet.</span>
+                  </div>
+                </div>
+                <div class="profile-item" style="grid-column: 1 / -1;">
+                  <span class="profile-lbl">Experience Summary</span>
+                  <p class="profile-val" data-view-experience style="margin: 4px 0 0; line-height: 1.6;">—</p>
+                </div>
+                <div class="profile-item" style="grid-column: 1 / -1;">
+                  <span class="profile-lbl">Curriculum Vitae (CV)</span>
+                  <div id="view-current-cv" style="margin-top: 4px;">
+                    <span style="color: var(--muted); font-size: 13px;">No CV uploaded yet.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. EDITABLE FORM MODE (Hidden by default; opens when editing or for new profiles) -->
+            <div id="profile-edit-mode" hidden>
+              <div class="section-card-header">
+                <h2 class="card-title">Edit Profile Details</h2>
+                <button type="button" class="btn-ctrl" id="btn-cancel-edit">Cancel</button>
               </div>
 
-              <div class="form-two">
-                <label>Preferred Location<input name="preferred_location" placeholder="e.g. Remote / Bengaluru" /></label>
-                <label>Salary Expectations<input name="salary_expectations" placeholder="e.g. $80,000 - $100,000" /></label>
-              </div>
+              <form class="contact-form" style="padding: 0;" data-profile-form>
+                <div class="form-two">
+                  <label>First Name<input required name="first_name" /></label>
+                  <label>Last Name<input required name="last_name" /></label>
+                </div>
 
-              <label>Work Authorization<input name="work_authorization" placeholder="e.g. Citizen, Work Visa, Permanent Resident" /></label>
-              <label>Experience Summary<textarea name="experience" rows="3" placeholder="Brief summary of your background and achievements..."></textarea></label>
-              
-              <label>Resume / CV <span class="small-label">PDF or DOC (Up to 5 MB)</span><input type="file" name="resume_file" accept=".pdf,.doc,.docx" /></label>
-              <div id="current-cv-link" style="margin-top: -6px; font-size: 13px;"></div>
+                <div class="form-two">
+                  <label>Mobile Number<input required name="phone" /></label>
+                  <label>Gender
+                    <select name="gender">
+                      <option value="">Select gender</option>
+                      <option value="Female">Female</option>
+                      <option value="Male">Male</option>
+                      <option value="Non-binary">Non-binary</option>
+                      <option value="Other">Other</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  </label>
+                </div>
 
-              <button class="button button-primary" type="submit" style="margin-top: 10px;">Save Profile <span>→</span></button>
-              <p class="form-message" role="status"></p>
-            </form>
+                <!-- Selectable Skills Cloud -->
+                <div class="tags-container">
+                  <label style="font-size: 13px; font-weight: 700;">Key Skills (Select or type below)</label>
+                  <div class="tag-cloud" data-skill-chips>
+                    <span class="tag-chip" data-tag="Figma"><span class="check-icon">✓</span> Figma</span>
+                    <span class="tag-chip" data-tag="React"><span class="check-icon">✓</span> React</span>
+                    <span class="tag-chip" data-tag="JavaScript"><span class="check-icon">✓</span> JavaScript</span>
+                    <span class="tag-chip" data-tag="Node.js"><span class="check-icon">✓</span> Node.js</span>
+                    <span class="tag-chip" data-tag="SQL / PostgreSQL"><span class="check-icon">✓</span> SQL</span>
+                    <span class="tag-chip" data-tag="Python"><span class="check-icon">✓</span> Python</span>
+                    <span class="tag-chip" data-tag="Product Management"><span class="check-icon">✓</span> Product Management</span>
+                    <span class="tag-chip" data-tag="Financial Modeling"><span class="check-icon">✓</span> Financial Modeling</span>
+                    <span class="tag-chip" data-tag="Sales & BD"><span class="check-icon">✓</span> Sales & BD</span>
+                    <span class="tag-chip" data-tag="Marketing"><span class="check-icon">✓</span> Marketing</span>
+                    <span class="tag-chip" data-tag="Human Resources"><span class="check-icon">✓</span> Human Resources</span>
+                  </div>
+                  <input name="skills" placeholder="Add custom skills separated by commas..." style="margin-top: 8px;" />
+                </div>
+
+                <!-- Selectable Industry Cloud -->
+                <div class="tags-container">
+                  <label style="font-size: 13px; font-weight: 700;">Preferred Industries</label>
+                  <div class="tag-cloud" data-industry-chips>
+                    <span class="tag-chip" data-tag="Technology & Software"><span class="check-icon">✓</span> Technology</span>
+                    <span class="tag-chip" data-tag="Finance & Banking"><span class="check-icon">✓</span> Finance & Banking</span>
+                    <span class="tag-chip" data-tag="Healthcare"><span class="check-icon">✓</span> Healthcare</span>
+                    <span class="tag-chip" data-tag="E-commerce"><span class="check-icon">✓</span> E-commerce</span>
+                    <span class="tag-chip" data-tag="EdTech"><span class="check-icon">✓</span> EdTech</span>
+                    <span class="tag-chip" data-tag="Design"><span class="check-icon">✓</span> Design</span>
+                  </div>
+                </div>
+
+                <div class="form-two">
+                  <label>Preferred Location<input name="preferred_location" placeholder="e.g. Remote / Bengaluru" /></label>
+                  <label>Salary Expectations<input name="salary_expectations" placeholder="e.g. $80,000 - $100,000" /></label>
+                </div>
+
+                <div class="form-two">
+                  <label>Work Authorization<input name="work_authorization" placeholder="e.g. Citizen, Work Visa" /></label>
+                  <label>Highest Education<input name="education" placeholder="e.g. B.Tech in CS" /></label>
+                </div>
+
+                <label>Experience Summary<textarea name="experience" rows="3" placeholder="Brief summary of your background..."></textarea></label>
+                
+                <label>Resume / CV <span class="small-label">PDF or DOC (Up to 5 MB)</span><input type="file" name="resume_file" accept=".pdf,.doc,.docx" /></label>
+                <div id="form-current-cv-link" style="margin-top: -6px; font-size: 13px;"></div>
+
+                <div class="button-row" style="margin-top: 10px;">
+                  <button class="button button-primary" type="submit">Save Changes <span>→</span></button>
+                  <button class="button button-text" type="button" id="btn-cancel-form">Cancel</button>
+                </div>
+                <p class="form-message" role="status"></p>
+              </form>
+            </div>
+
           </div>
         </div>
+
       </div>
     </main>
 
