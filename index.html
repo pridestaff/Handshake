@@ -13,17 +13,18 @@
     <script src="supabase-config.js" defer></script>
     <script src="script.js" defer></script>
   </head>
-  <body>
+  <body data-page="home">
     <header class="site-header">
-      <a class="brand" href="#home" aria-label="Northstar Talent home"><span class="brand-mark">N</span>Northstar <em>Talent</em></a>
+      <a class="brand" href="index.html" aria-label="Northstar Talent home"><span class="brand-mark">N</span>Northstar <em>Talent</em></a>
       <button class="menu-button" aria-label="Open navigation" aria-expanded="false">Menu</button>
       <nav class="main-nav" aria-label="Main navigation">
-        <a href="#home">Home</a>
-        <a href="#jobs">Jobs</a>
+        <a href="index.html">Home</a>
+        <a href="jobs.html">Browse Jobs</a>
+        <a href="profile.html" class="nav-profile-link" hidden>My Dashboard</a>
         <a href="#about">About</a>
         <a href="#contact">Contact</a>
         <button class="nav-sign-in" type="button" data-open-auth>Sign in</button>
-        <a class="nav-cta" href="#jobs">Find a job</a>
+        <a class="nav-cta" href="jobs.html">Find a job</a>
       </nav>
     </header>
 
@@ -34,7 +35,7 @@
           <h1>Work that feels like <i>your next step.</i></h1>
           <p class="hero-text">We connect ambitious people with teams where they can do their best work.</p>
           <div class="button-row">
-            <a class="button button-primary" href="#jobs">Browse open roles <span>→</span></a>
+            <a class="button button-primary" href="jobs.html">Browse all roles <span>→</span></a>
             <a class="button button-text" href="#about">How we can help</a>
           </div>
         </div>
@@ -51,16 +52,27 @@
           <p>Whether you are searching for your next opportunity or building a brilliant team, we make the process personal, clear and worthwhile.</p>
         </div>
         <div class="path-cards">
-          <a class="path-card candidate" href="#jobs"><span class="card-number">01</span><h3>I’m looking for work</h3><p>Explore roles that match your skills and ambitions.</p><span class="card-link">See open jobs <b>→</b></span></a>
+          <a class="path-card candidate" href="jobs.html"><span class="card-number">01</span><h3>I’m looking for work</h3><p>Explore roles that match your skills and ambitions.</p><span class="card-link">See open jobs <b>→</b></span></a>
           <a class="path-card employer" href="#contact"><span class="card-number">02</span><h3>I’m hiring</h3><p>Find thoughtful, capable people for your team.</p><span class="card-link">Talk to us <b>→</b></span></a>
         </div>
       </section>
 
-      <section class="featured-section" id="jobs">
+      <!-- Featured / Selected Jobs -->
+      <section class="featured-section" id="featured-jobs">
         <div class="section-wrap">
-          <div class="section-heading-row"><div><p class="eyebrow">Open positions</p><h2>Fresh opportunities</h2></div><label class="search-field"><span>⌕</span><input type="search" data-job-search placeholder="Search roles or locations" /></label></div>
-          <div class="job-list" data-jobs></div>
-          <p class="empty-state" hidden>No roles match that search. Try another term.</p>
+          <div class="section-heading-row">
+            <div>
+              <p class="eyebrow">Curated roles</p>
+              <h2>Featured positions</h2>
+            </div>
+            <a class="button button-primary" style="border: 1px solid rgba(255,255,255,0.4);" href="jobs.html">View all jobs <span>→</span></a>
+          </div>
+          <div class="job-list" data-featured-jobs>
+            <p class="empty-state">Loading featured positions...</p>
+          </div>
+          <div style="margin-top: 35px; text-align: center;">
+            <a class="text-link" style="color: white;" href="jobs.html">Explore our complete catalog of vacancies <span>→</span></a>
+          </div>
         </div>
       </section>
 
@@ -74,10 +86,44 @@
       <section class="contact-section" id="contact"><div class="contact-layout section-wrap"><div class="contact-copy"><p class="eyebrow">Get in touch</p><h2>Let’s start a<br /><i>conversation.</i></h2><p>Looking for talent, searching for a new role, or simply want to say hello? We would love to hear from you.</p><div class="contact-details"><a href="mailto:hello@northstartalent.com">hello@northstartalent.com</a><a href="tel:+910000000000">+91 00000 00000</a><span>Monday–Friday, 9am–6pm</span></div></div><form class="contact-form" data-contact-form><label>Name<input required name="name" autocomplete="name" /></label><label>Email<input required type="email" name="email" autocomplete="email" /></label><label>I’m interested in<select name="interest"><option>Finding a job</option><option>Hiring people</option><option>Something else</option></select></label><label>Message<textarea required name="message" rows="5" placeholder="How can we help?"></textarea></label><button class="button button-primary" type="submit">Send message <span>→</span></button><p class="form-message" role="status"></p></form></div></section>
     </main>
 
-    <dialog class="apply-dialog" data-apply-dialog><form class="apply-form" data-apply-form><div class="dialog-heading"><div><p class="eyebrow">Apply now</p><h2 data-application-title>Apply for this role</h2></div><button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button></div><input type="hidden" name="jobId" /><label>Name<input required name="name" autocomplete="name" /></label><label>Email<input required name="email" type="email" autocomplete="email" readonly /></label><label>Phone<input required name="phone" autocomplete="tel" /></label><label>Résumé <span class="small-label">PDF or DOC, up to 5 MB</span><input required type="file" name="resume" accept=".pdf,.doc,.docx" /></label><label>A note <span class="small-label">Optional</span><textarea name="message" rows="3" placeholder="Tell us why this role interests you."></textarea></label><button class="button button-primary" type="submit">Send application <span>→</span></button><p class="form-message" role="status"></p></form></dialog>
+    <!-- Global Application Modal -->
+    <dialog class="apply-dialog" data-apply-dialog>
+      <form class="apply-form" data-apply-form>
+        <div class="dialog-heading">
+          <div><p class="eyebrow">Apply now</p><h2 data-application-title>Apply for this role</h2></div>
+          <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
+        </div>
+        <input type="hidden" name="jobId" />
+        <label>Full name<input required name="name" autocomplete="name" /></label>
+        <label>Email<input required name="email" type="email" autocomplete="email" readonly /></label>
+        <label>Phone<input required name="phone" autocomplete="tel" /></label>
+        <label>Résumé <span class="small-label">PDF or DOC, up to 5 MB</span><input required type="file" name="resume" accept=".pdf,.doc,.docx" /></label>
+        <label>Cover note <span class="small-label">Optional</span><textarea name="message" rows="3" placeholder="Tell us why this role interests you."></textarea></label>
+        <button class="button button-primary" type="submit">Submit application <span>→</span></button>
+        <p class="form-message" role="status"></p>
+      </form>
+    </dialog>
 
-    <dialog class="auth-dialog" data-auth-dialog><form class="auth-form" data-auth-form><div class="dialog-heading"><div><p class="eyebrow">Candidate account</p><h2 data-auth-heading>Sign in to apply</h2></div><button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button></div><label>Email<input required type="email" name="email" autocomplete="email" /></label><label>Password<input required type="password" name="password" autocomplete="current-password" minlength="8" /></label><button class="button button-primary" type="submit" data-auth-submit>Sign in <span>→</span></button><p class="form-message" role="status"></p><button type="button" class="auth-toggle" data-auth-toggle>New here? Create an account</button></form></dialog>
+    <!-- Global Auth Modal -->
+    <dialog class="auth-dialog" data-auth-dialog>
+      <form class="auth-form" data-auth-form>
+        <div class="dialog-heading">
+          <div><p class="eyebrow">Candidate portal</p><h2 data-auth-heading>Sign in to your account</h2></div>
+          <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
+        </div>
+        <label>Email<input required type="email" name="email" autocomplete="email" /></label>
+        <label>Password<input required type="password" name="password" autocomplete="current-password" minlength="6" /></label>
+        <button class="button button-primary" type="submit" data-auth-submit>Sign in <span>→</span></button>
+        <p class="form-message" role="status"></p>
+        <button type="button" class="auth-toggle" data-auth-toggle>New here? Create an account</button>
+      </form>
+    </dialog>
 
-    <footer class="site-footer"><a class="brand" href="#home"><span class="brand-mark">N</span>Northstar <em>Talent</em></a><p>Thoughtful recruitment for people and teams.</p><div><a href="admin.html">Admin</a><span>© <span data-year></span> Northstar Talent</span></div></footer>
+    <!-- Admin link removed from public footer for security -->
+    <footer class="site-footer">
+      <a class="brand" href="index.html"><span class="brand-mark">N</span>Northstar <em>Talent</em></a>
+      <p>Thoughtful recruitment for people and teams.</p>
+      <div><span>© <span data-year></span> Northstar Talent</span></div>
+    </footer>
   </body>
 </html>
