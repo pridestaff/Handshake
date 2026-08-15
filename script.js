@@ -9,6 +9,7 @@ function escapeHtml(value) {
 }
 
 function showMessage(element, message, isError = false) {
+  if (!element) return;
   element.textContent = message;
   element.classList.toggle("is-error", isError);
 }
@@ -49,17 +50,17 @@ async function renderJobs() {
     list.innerHTML = '<p class="empty-state">Jobs are temporarily unavailable. Please try again shortly.</p>';
     return;
   }
-  jobsCache = data;
+  jobsCache = data || [];
   const search = document.querySelector("[data-job-search]");
   const empty = document.querySelector(".empty-state");
   const draw = () => {
-    const term = search.value.toLowerCase().trim();
+    const term = search ? search.value.toLowerCase().trim() : "";
     const visibleJobs = jobsCache.filter((job) => `${job.title} ${job.location} ${job.department}`.toLowerCase().includes(term));
     list.innerHTML = visibleJobs.map(jobCard).join("");
-    empty.hidden = Boolean(visibleJobs.length);
+    if (empty) empty.hidden = Boolean(visibleJobs.length);
     bindApplicationButtons();
   };
-  search.addEventListener("input", draw);
+  if (search) search.addEventListener("input", draw);
   draw();
 }
 
@@ -115,7 +116,7 @@ function setupAuthDialog() {
     submit.disabled = false;
     if (result.error) { showMessage(message, result.error.message, true); return; }
     if (isSignUp && !result.data.session) {
-      showMessage(message, "Check your email to confirm your account, then sign in.");
+      showMessage(message, "Account created! Please sign in.");
       return;
     }
     await refreshCurrentUser();
@@ -141,11 +142,12 @@ async function setupApplicationForm() {
     const submit = form.querySelector('[type="submit"]');
     submit.disabled = true;
     showMessage(message, "Uploading your résumé securely…");
-    const resumePath = `${user.id}/${crypto.randomUUID()}.${extension}`;
-    const { error: uploadError } = await supabaseClient.storage.from("resumes").upload(resumePath, file, { contentType: file.type || undefined, upsert: false });
+    const resumePath = `${user.id}/${Date.now()}.${extension}`;
+    const { error: uploadError } = await supabaseClient.storage.from("resumes").upload(resumePath, file, { contentType: file.type || undefined, upsert: true });
     if (uploadError) { submit.disabled = false; showMessage(message, uploadError.message, true); return; }
+
     const { error: applicationError } = await supabaseClient.from("applications").insert({
-      job_id: Number(form.elements.jobId.value),
+      job_id: form.elements.jobId.value,
       candidate_id: user.id,
       full_name: form.elements.name.value.trim(),
       email: user.email,
@@ -153,8 +155,8 @@ async function setupApplicationForm() {
       message: form.elements.message.value.trim() || null,
       resume_path: resumePath
     });
+
     if (applicationError) {
-      await supabaseClient.storage.from("resumes").remove([resumePath]);
       submit.disabled = false;
       const duplicate = applicationError.code === "23505";
       showMessage(message, duplicate ? "You have already applied for this role." : applicationError.message, true);
@@ -164,6 +166,7 @@ async function setupApplicationForm() {
     form.elements.email.value = user.email || "";
     submit.disabled = false;
     showMessage(message, "Thank you—your application has been received.");
+    setTimeout(() => { form.closest("dialog").close(); }, 1500);
   });
 }
 
@@ -184,12 +187,13 @@ async function isAdmin(userId) {
 
 function showAdminSection(selector) {
   document.querySelectorAll("[data-admin-loading], [data-admin-login], [data-admin-denied], [data-admin-panel]").forEach((section) => { section.hidden = true; });
-  document.querySelector(selector).hidden = false;
+  const el = document.querySelector(selector);
+  if (el) el.hidden = false;
 }
 
 async function showResume(path) {
   const { data, error } = await supabaseClient.storage.from("resumes").createSignedUrl(path, 60);
-  if (error) { window.alert("The résumé could not be opened. Please try again."); return; }
+  if (error || !data?.signedUrl) { window.alert("The résumé could not be opened. Please try again."); return; }
   window.open(data.signedUrl, "_blank", "noopener,noreferrer");
 }
 
@@ -204,30 +208,41 @@ async function setupAdmin() {
     showAdminSection("[data-admin-panel]");
     await window.renderAdmin();
   };
-  loginForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const message = loginForm.querySelector(".form-message");
-    const submit = loginForm.querySelector('[type="submit"]');
-    submit.disabled = true;
-    const { error } = await supabaseClient.auth.signInWithPassword({ email: loginForm.elements.email.value.trim(), password: loginForm.elements.password.value });
-    submit.disabled = false;
-    if (error) { showMessage(message, error.message, true); return; }
-    await loadAdmin();
-  });
+
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = loginForm.querySelector(".form-message");
+      const submit = loginForm.querySelector('[type="submit"]');
+      submit.disabled = true;
+      const { error } = await supabaseClient.auth.signInWithPassword({ email: loginForm.elements.email.value.trim(), password: loginForm.elements.password.value });
+      submit.disabled = false;
+      if (error) { showMessage(message, error.message, true); return; }
+      await loadAdmin();
+    });
+  }
+
   document.querySelectorAll("[data-admin-sign-out]").forEach((button) => button.addEventListener("click", async () => { await supabaseClient.auth.signOut(); await loadAdmin(); }));
-  document.querySelector("[data-show-job-form]").addEventListener("click", () => document.querySelector("[data-job-dialog]").showModal());
-  document.querySelector("[data-job-form]").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const message = form.querySelector(".form-message");
-    const submit = form.querySelector('[type="submit"]');
-    submit.disabled = true;
-    const job = Object.fromEntries(new FormData(form).entries());
-    const { error } = await supabaseClient.from("jobs").insert(job);
-    submit.disabled = false;
-    if (error) { showMessage(message, error.message, true); return; }
-    form.reset(); form.closest("dialog").close(); await window.renderAdmin(); await renderJobs();
-  });
+  
+  const showJobBtn = document.querySelector("[data-show-job-form]");
+  if (showJobBtn) showJobBtn.addEventListener("click", () => document.querySelector("[data-job-dialog]").showModal());
+  
+  const jobForm = document.querySelector("[data-job-form]");
+  if (jobForm) {
+    jobForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const message = form.querySelector(".form-message");
+      const submit = form.querySelector('[type="submit"]');
+      submit.disabled = true;
+      const job = Object.fromEntries(new FormData(form).entries());
+      const { error } = await supabaseClient.from("jobs").insert(job);
+      submit.disabled = false;
+      if (error) { showMessage(message, error.message, true); return; }
+      form.reset(); form.closest("dialog").close(); await window.renderAdmin();
+    });
+  }
+
   window.renderAdmin = async () => {
     const applicationsList = document.querySelector("[data-applications]");
     const [jobsResult, applicationsResult] = await Promise.all([
@@ -235,15 +250,64 @@ async function setupAdmin() {
       supabaseClient.from("applications").select("id, full_name, email, phone, status, resume_path, created_at, jobs(title)").order("created_at", { ascending: false })
     ]);
     if (jobsResult.error || applicationsResult.error) { showAdminSection("[data-admin-denied]"); return; }
-    const jobs = jobsResult.data;
-    const applications = applicationsResult.data;
+    const jobs = jobsResult.data || [];
+    const applications = applicationsResult.data || [];
+    
     document.querySelector("[data-job-count]").textContent = `(${jobs.filter((job) => job.is_open).length} open)`;
     document.querySelector("[data-application-count]").textContent = `(${applications.length})`;
-    list.innerHTML = jobs.length ? jobs.map((job) => `<article class="admin-job"><div><h3>${escapeHtml(job.title)} ${job.is_open ? "" : '<span class="closed-label">Closed</span>'}</h3><p>${escapeHtml(job.location)} · ${escapeHtml(job.employment_type)}</p></div>${job.is_open ? `<button class="delete-job" data-close-job="${job.id}">Close role</button>` : ""}</article>`).join("") : '<p class="empty-admin">No roles yet.</p>';
-    applicationsList.innerHTML = applications.length ? applications.map((application) => `<article class="application"><h3>${escapeHtml(application.full_name)}</h3><p>${escapeHtml(application.jobs?.title || "Role unavailable")} · ${escapeHtml(application.email)}</p><div class="application-actions"><button data-view-resume="${escapeHtml(application.resume_path)}">View résumé</button><label>Status<select data-application-status="${application.id}"><option value="received" ${application.status === "received" ? "selected" : ""}>Received</option><option value="reviewing" ${application.status === "reviewing" ? "selected" : ""}>Reviewing</option><option value="interview" ${application.status === "interview" ? "selected" : ""}>Interview</option><option value="rejected" ${application.status === "rejected" ? "selected" : ""}>Rejected</option><option value="hired" ${application.status === "hired" ? "selected" : ""}>Hired</option></select></label></div></article>`).join("") : '<p class="empty-admin">Applications will appear here.</p>';
-    document.querySelectorAll("[data-close-job]").forEach((button) => button.addEventListener("click", async () => { await supabaseClient.from("jobs").update({ is_open: false, updated_at: new Date().toISOString() }).eq("id", button.dataset.closeJob); await window.renderAdmin(); await renderJobs(); }));
+    
+    list.innerHTML = jobs.length ? jobs.map((job) => `
+      <article class="admin-job">
+        <div>
+          <h3>${escapeHtml(job.title)} ${job.is_open ? "" : '<span class="closed-label">(Closed)</span>'}</h3>
+          <p>${escapeHtml(job.location)} · ${escapeHtml(job.employment_type)}</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="delete-job" style="color:var(--ink)" data-toggle-job="${job.id}" data-current-status="${job.is_open}">
+            ${job.is_open ? "Close" : "Reopen"}
+          </button>
+          <button class="delete-job" data-delete-job="${job.id}">Delete</button>
+        </div>
+      </article>
+    `).join("") : '<p class="empty-admin">No roles yet.</p>';
+
+    applicationsList.innerHTML = applications.length ? applications.map((application) => `
+      <article class="application">
+        <h3>${escapeHtml(application.full_name)}</h3>
+        <p>${escapeHtml(application.jobs?.title || "Role unavailable")} · ${escapeHtml(application.email)}</p>
+        <div class="application-actions">
+          <button type="button" data-view-resume="${escapeHtml(application.resume_path)}">View résumé</button>
+          <label>Status
+            <select data-application-status="${application.id}">
+              <option value="received" ${application.status === "received" ? "selected" : ""}>Received</option>
+              <option value="reviewing" ${application.status === "reviewing" ? "selected" : ""}>Reviewing</option>
+              <option value="interview" ${application.status === "interview" ? "selected" : ""}>Interview</option>
+              <option value="rejected" ${application.status === "rejected" ? "selected" : ""}>Rejected</option>
+              <option value="hired" ${application.status === "hired" ? "selected" : ""}>Hired</option>
+            </select>
+          </label>
+        </div>
+      </article>
+    `).join("") : '<p class="empty-admin">Applications will appear here.</p>';
+
+    document.querySelectorAll("[data-toggle-job]").forEach((button) => button.addEventListener("click", async () => {
+      const nextStatus = button.dataset.currentStatus !== "true";
+      await supabaseClient.from("jobs").update({ is_open: nextStatus, updated_at: new Date().toISOString() }).eq("id", button.dataset.toggleJob);
+      await window.renderAdmin();
+    }));
+
+    document.querySelectorAll("[data-delete-job]").forEach((button) => button.addEventListener("click", async () => {
+      if (confirm("Delete this job listing permanently?")) {
+        await supabaseClient.from("jobs").delete().eq("id", button.dataset.deleteJob);
+        await window.renderAdmin();
+      }
+    }));
+
     document.querySelectorAll("[data-view-resume]").forEach((button) => button.addEventListener("click", () => showResume(button.dataset.viewResume)));
-    document.querySelectorAll("[data-application-status]").forEach((select) => select.addEventListener("change", async () => { await supabaseClient.from("applications").update({ status: select.value }).eq("id", select.dataset.applicationStatus); }));
+    
+    document.querySelectorAll("[data-application-status]").forEach((select) => select.addEventListener("change", async () => {
+      await supabaseClient.from("applications").update({ status: select.value }).eq("id", select.dataset.applicationStatus);
+    }));
   };
   await loadAdmin();
 }
@@ -252,7 +316,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelectorAll("[data-year]").forEach((year) => { year.textContent = new Date().getFullYear(); });
   document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));
   const menuButton = document.querySelector(".menu-button");
-  if (menuButton) menuButton.addEventListener("click", () => { const nav = document.querySelector(".main-nav"); const isOpen = nav.classList.toggle("open"); menuButton.setAttribute("aria-expanded", isOpen); });
+  if (menuButton) menuButton.addEventListener("click", () => {
+    const nav = document.querySelector(".main-nav");
+    const isOpen = nav.classList.toggle("open");
+    menuButton.setAttribute("aria-expanded", isOpen);
+  });
   await refreshCurrentUser();
   document.querySelectorAll("[data-open-auth]").forEach((button) => button.addEventListener("click", async () => {
     if (currentUser) { await supabaseClient.auth.signOut(); await refreshCurrentUser(); return; }
