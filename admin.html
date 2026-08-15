@@ -1,9 +1,12 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex" /><title>Admin Portal | Northstar Talent</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Admin Control Center | Northstar Talent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
@@ -17,8 +20,13 @@
     </header>
 
     <main class="admin-main">
-      <section class="admin-gate" data-admin-loading><p class="eyebrow">Admin portal</p><h1>Verifying permissions…</h1></section>
+      <!-- Loading Gate -->
+      <section class="admin-gate" data-admin-loading>
+        <p class="eyebrow">Admin portal</p>
+        <h1>Verifying permissions…</h1>
+      </section>
       
+      <!-- Login Gate -->
       <section class="admin-gate" data-admin-login hidden>
         <p class="eyebrow">Admin portal</p>
         <h1>Sign in to manage agency</h1>
@@ -31,6 +39,7 @@
         </form>
       </section>
       
+      <!-- Denied Gate -->
       <section class="admin-gate" data-admin-denied hidden>
         <p class="eyebrow">Admin portal</p>
         <h1>Access Denied</h1>
@@ -38,58 +47,66 @@
         <button class="button button-text" data-admin-sign-out>Sign out</button>
       </section>
 
-      <!-- Main Dashboard View -->
+      <!-- Main Dashboard View: All Sections Stacked Vertically -->
       <section data-admin-panel hidden>
         <div class="admin-intro">
-          <div><p class="eyebrow">Control Center</p><h1>Agency Management</h1></div>
+          <div>
+            <p class="eyebrow">Master Control Center</p>
+            <h1>Agency Management</h1>
+          </div>
           <div class="admin-actions">
             <button class="button button-text" data-admin-sign-out>Sign out</button>
-            <button class="button button-primary" data-show-job-form>+ Add a job</button>
+            <button class="button button-primary" data-show-job-form>+ Add New Job</button>
+            <button class="button button-primary" data-show-user-form style="background: var(--peach);">+ Add Candidate</button>
           </div>
         </div>
 
-        <!-- Admin Navigation Tabs -->
-        <div class="admin-tabs">
-          <button class="admin-tab-btn active" data-tab="jobs-tab">Jobs Management <span data-job-count></span></button>
-          <button class="admin-tab-btn" data-tab="apps-tab">Applications Pipeline <span data-application-count></span></button>
-          <button class="admin-tab-btn" data-tab="users-tab">Registered Users <span data-user-count></span></button>
-          <button class="admin-tab-btn" data-tab="inquiries-tab">Contact Inquiries <span data-inquiry-count></span></button>
-        </div>
-
-        <!-- 1. Jobs Tab -->
-        <div class="admin-tab-content active" id="jobs-tab">
-          <div class="admin-card">
-            <h2>Active & Inactive Jobs</h2>
-            <div class="admin-job-list" data-admin-jobs></div>
+        <div class="admin-vertical-container">
+          <!-- 1. Jobs Management -->
+          <div class="admin-card vertical-section">
+            <div class="section-card-header">
+              <h2>1. Jobs Management <span data-job-count></span></h2>
+              <button class="button button-text" style="font-size: 13px;" data-show-job-form>+ Create Job</button>
+            </div>
+            <div class="admin-job-list" data-admin-jobs>
+              <p class="empty-admin">Loading jobs...</p>
+            </div>
           </div>
-        </div>
 
-        <!-- 2. Applications Tab -->
-        <div class="admin-tab-content" id="apps-tab">
-          <div class="admin-card">
-            <h2>Candidate Applications</h2>
-            <div class="application-list" data-applications></div>
+          <!-- 2. Applications Pipeline -->
+          <div class="admin-card vertical-section">
+            <div class="section-card-header">
+              <h2>2. Applications Pipeline <span data-application-count></span></h2>
+            </div>
+            <div class="application-list" data-applications>
+              <p class="empty-admin">Loading applications...</p>
+            </div>
           </div>
-        </div>
 
-        <!-- 3. Users Tab -->
-        <div class="admin-tab-content" id="users-tab">
-          <div class="admin-card">
-            <h2>Registered Users & Candidates</h2>
-            <div class="admin-job-list" data-admin-users></div>
+          <!-- 3. Registered Candidates & Users (Excludes Admins) -->
+          <div class="admin-card vertical-section">
+            <div class="section-card-header">
+              <h2>3. Registered Candidates & Users <span data-user-count></span></h2>
+              <button class="button button-text" style="font-size: 13px;" data-show-user-form>+ Create Candidate Profile</button>
+            </div>
+            <div class="admin-job-list" data-admin-users>
+              <p class="empty-admin">Loading users...</p>
+            </div>
           </div>
-        </div>
 
-        <!-- 4. Contact Inquiries Tab -->
-        <div class="admin-tab-content" id="inquiries-tab">
-          <div class="admin-card">
-            <h2>Contact Messages & Leads</h2>
-            <div class="application-list" data-admin-inquiries></div>
+          <!-- 4. Contact Inquiries -->
+          <div class="admin-card vertical-section">
+            <div class="section-card-header">
+              <h2>4. Contact Inquiries <span data-inquiry-count></span></h2>
+            </div>
+            <div class="application-list" data-admin-inquiries>
+              <p class="empty-admin">Loading inquiries...</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- Add / Edit Job Dialog -->
+      <!-- Modal 1: Create / Edit Job -->
       <dialog class="job-dialog" data-job-dialog>
         <form class="job-form" data-job-form>
           <div class="dialog-heading">
@@ -97,31 +114,128 @@
             <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
           </div>
           <input type="hidden" name="job_id" />
-          <label>Job title<input required name="title" placeholder="e.g. Senior Backend Engineer" /></label>
+          
           <div class="form-two">
-            <label>Location<input required name="location" placeholder="e.g. Remote / London" /></label>
-            <label>Type
+            <label>Job Title<input required name="title" placeholder="e.g. Senior Backend Engineer" /></label>
+            <label>Hiring Organization / Client<input required name="company_name" placeholder="e.g. Northstar Talent / Fintech Co." /></label>
+          </div>
+
+          <div class="form-two">
+            <label>Department / Team<input required name="department" placeholder="e.g. Engineering & Architecture" /></label>
+            <label>Employment Type
               <select required name="employment_type">
                 <option value="Full-time">Full-time</option>
-                <option value="Contract">Contract</option>
                 <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Internship">Internship</option>
               </select>
             </label>
           </div>
+
           <div class="form-two">
-            <label>Department<input required name="department" placeholder="e.g. Engineering" /></label>
-            <label>Salary Range<input name="salary_range" placeholder="e.g. $90k - $120k" /></label>
+            <label>Location & Workplace Policy<input required name="location" placeholder="e.g. Bengaluru (Hybrid) or Remote (APAC)" /></label>
+            <label>Salary & Compensation Range<input name="salary_range" placeholder="e.g. $90,000 – $120,000 / year + Equity" /></label>
           </div>
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" name="is_featured" style="width: auto;" /> Show as Featured Role on Homepage
+
+          <div class="form-two">
+            <label>Application Deadline<input name="application_deadline" placeholder="e.g. October 30, 2026 or Rolling" /></label>
+            <label style="display: flex; align-items: center; gap: 10px; margin-top: 25px; cursor: pointer;">
+              <input type="checkbox" name="is_featured" style="width: auto;" /> Feature on Homepage
+            </label>
+          </div>
+
+          <label>Custom Redirection URL <span class="small-label">Optional — Registered candidates redirect here immediately; new candidates after submitting application</span>
+            <input name="redirect_url" type="url" placeholder="e.g. https://company-careers-portal.com/job/102" />
           </label>
-          <label>Short description<textarea required name="description" rows="4" minlength="20" placeholder="Summary of responsibilities and qualifications"></textarea></label>
+
+          <label>Role Scope & Mission (Overview)<textarea required name="description" rows="3" placeholder="Concise summary of why the role exists and its main goals..."></textarea></label>
+          <label>Key Responsibilities<textarea name="responsibilities" rows="4" placeholder="• Day-to-day deliverables and core workflows..."></textarea></label>
+          <label>Candidate Requirements & Qualifications<textarea name="requirements" rows="4" placeholder="• Required skills, years of experience, and degrees..."></textarea></label>
+
           <div class="button-row">
-            <button class="button button-primary" type="submit">Publish job <span>→</span></button>
+            <button class="button button-primary" type="submit" data-job-submit-btn>Publish Job <span>→</span></button>
             <button class="button button-text" type="button" data-close-dialog>Cancel</button>
           </div>
           <p class="form-message" role="status"></p>
         </form>
+      </dialog>
+
+      <!-- Modal 2: Create / Edit User Profile -->
+      <dialog class="job-dialog" data-user-dialog>
+        <form class="job-form" data-user-form>
+          <div class="dialog-heading">
+            <h2 data-user-modal-title>Candidate Profile</h2>
+            <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
+          </div>
+          <input type="hidden" name="user_id" />
+          
+          <div class="form-two">
+            <label>First Name<input required name="first_name" placeholder="e.g. Maya" /></label>
+            <label>Last Name<input required name="last_name" placeholder="e.g. Rao" /></label>
+          </div>
+
+          <div class="form-two">
+            <label>Email<input required type="email" name="email" placeholder="e.g. candidate@example.com" /></label>
+            <label>Mobile No<input required name="phone" placeholder="e.g. +91 9876543210" /></label>
+          </div>
+
+          <div class="form-two">
+            <label>Gender
+              <select name="gender">
+                <option value="">Select gender</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+                <option value="Non-binary">Non-binary</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </label>
+            <label>Role
+              <select name="role">
+                <option value="candidate">Candidate</option>
+                <option value="employer">Employer</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-two">
+            <label>Preferred Location<input name="preferred_location" placeholder="e.g. Remote / Bengaluru" /></label>
+            <label>Salary Expectations<input name="salary_expectations" placeholder="e.g. $80k - $100k" /></label>
+          </div>
+
+          <label>Key Skills (comma-separated)<input name="skills" placeholder="e.g. Figma, React, SQL" /></label>
+          <label>Experience Summary<textarea name="experience" rows="3" placeholder="Brief background summary..."></textarea></label>
+
+          <div class="button-row">
+            <button class="button button-primary" type="submit" data-user-submit-btn>Save Candidate <span>→</span></button>
+            <button class="button button-text" type="button" data-close-dialog>Cancel</button>
+          </div>
+          <p class="form-message" role="status"></p>
+        </form>
+      </dialog>
+
+      <!-- Modal 3: View Full Application Details -->
+      <dialog class="job-dialog" data-app-detail-dialog>
+        <div style="padding: 28px; background: white;">
+          <div class="dialog-heading">
+            <h2 data-view-app-candidate>Application Details</h2>
+            <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
+          </div>
+          <p class="eyebrow" data-view-app-job style="margin-bottom: 12px;"></p>
+          <div style="display: grid; gap: 12px; font-size: 14px; margin-bottom: 20px;">
+            <p><strong>Email:</strong> <span data-view-app-email></span></p>
+            <p><strong>Phone:</strong> <span data-view-app-phone></span></p>
+            <p><strong>Applied Date:</strong> <span data-view-app-date></span></p>
+            <div style="background: var(--cream); padding: 14px; border-left: 3px solid var(--peach);">
+              <strong>Cover Note:</strong>
+              <p data-view-app-note style="margin: 6px 0 0; color: var(--ink);"></p>
+            </div>
+          </div>
+          <div class="button-row">
+            <button class="button button-primary" type="button" data-view-app-cv-btn>Download CV / Resume ↗</button>
+            <button class="button button-text" type="button" data-close-dialog>Close</button>
+          </div>
+        </div>
       </dialog>
     </main>
   </body>
