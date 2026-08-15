@@ -655,6 +655,9 @@ async function initSingleJobPage() {
 // ----------------------------------------------------
 // PAGE: CANDIDATE PROFILE (profile.html)
 // ----------------------------------------------------
+// ----------------------------------------------------
+// PAGE: CANDIDATE PROFILE (profile.html)
+// ----------------------------------------------------
 async function loadProfilePage() {
   const user = await refreshCurrentUser();
   if (!user) {
@@ -662,10 +665,85 @@ async function loadProfilePage() {
     return;
   }
 
-  document.querySelector("[data-profile-name]").textContent = currentProfile?.full_name || "My Dashboard";
-  document.querySelector("[data-profile-email]").textContent = user.email;
+  const profileNameEl = document.querySelector("[data-profile-name]");
+  const profileEmailEl = document.querySelector("[data-profile-email]");
+  if (profileNameEl) profileNameEl.textContent = currentProfile?.full_name || "My Dashboard";
+  if (profileEmailEl) profileEmailEl.textContent = user.email || "";
 
+  const viewModeEl = document.getElementById("profile-view-mode");
+  const editModeEl = document.getElementById("profile-edit-mode");
+  const incompleteBanner = document.getElementById("profile-incomplete-banner");
   const form = document.querySelector("[data-profile-form]");
+
+  // Determine if candidate has completed basic details
+  const isProfileComplete = Boolean(
+    currentProfile?.phone && (currentProfile?.skills || currentProfile?.experience || currentProfile?.preferred_location)
+  );
+
+  const switchToEdit = () => {
+    if (viewModeEl) viewModeEl.hidden = true;
+    if (editModeEl) editModeEl.hidden = false;
+  };
+
+  const switchToView = () => {
+    if (editModeEl) editModeEl.hidden = true;
+    if (viewModeEl) viewModeEl.hidden = false;
+  };
+
+  // Bind Switch Buttons
+  document.getElementById("btn-edit-profile")?.addEventListener("click", switchToEdit);
+  document.getElementById("btn-complete-profile")?.addEventListener("click", switchToEdit);
+  document.getElementById("btn-cancel-edit")?.addEventListener("click", switchToView);
+  document.getElementById("btn-cancel-form")?.addEventListener("click", switchToView);
+
+  // Set Initial Visibility
+  if (isProfileComplete) {
+    switchToView();
+    if (incompleteBanner) incompleteBanner.hidden = true;
+  } else {
+    switchToView();
+    if (incompleteBanner) incompleteBanner.hidden = false;
+  }
+
+  // Populate Read-Only View Elements
+  const setTxt = (sel, val, fallback = "—") => {
+    const el = document.querySelector(sel);
+    if (el) el.textContent = val && val.trim() !== "" ? val : fallback;
+  };
+
+  setTxt("[data-view-name]", currentProfile?.full_name);
+  setTxt("[data-view-phone]", currentProfile?.phone);
+  setTxt("[data-view-gender]", currentProfile?.gender);
+  setTxt("[data-view-location]", currentProfile?.preferred_location);
+  setTxt("[data-view-salary]", currentProfile?.salary_expectations);
+  setTxt("[data-view-auth]", currentProfile?.work_authorization);
+  setTxt("[data-view-education]", currentProfile?.education);
+  setTxt("[data-view-experience]", currentProfile?.experience);
+
+  // Render Skill Badges in View Mode
+  const skillsContainer = document.querySelector("[data-view-skills]");
+  if (skillsContainer) {
+    if (currentProfile?.skills && currentProfile.skills.trim() !== "") {
+      const tags = currentProfile.skills.split(",").map((s) => s.trim()).filter(Boolean);
+      skillsContainer.innerHTML = tags.map((t) => `<span class="profile-skill-badge">${escapeHtml(t)}</span>`).join("");
+    } else {
+      skillsContainer.innerHTML = `<span style="color: var(--muted); font-size: 13px;">No skills added yet.</span>`;
+    }
+  }
+
+  // Render CV Link in View Mode
+  const viewCvContainer = document.getElementById("view-current-cv");
+  if (viewCvContainer) {
+    if (currentProfile?.resume_path) {
+      viewCvContainer.innerHTML = `
+        <button type="button" class="btn-ctrl btn-ctrl-primary" style="font-size:12px;" onclick="viewResume('${currentProfile.resume_path}')">View Uploaded CV ↗</button>
+      `;
+    } else {
+      viewCvContainer.innerHTML = `<span style="color: var(--muted); font-size: 13px;">No CV uploaded yet.</span>`;
+    }
+  }
+
+  // Populate Edit Form Inputs
   if (form && currentProfile) {
     form.first_name.value = currentProfile.first_name || "";
     form.last_name.value = currentProfile.last_name || "";
@@ -681,13 +759,15 @@ async function loadProfilePage() {
     bindTagCloud(document.querySelector("[data-skill-chips]"), form.skills);
     bindTagCloud(document.querySelector("[data-industry-chips]"), form.skills);
 
-    if (currentProfile.resume_path) {
-      document.getElementById("current-cv-link").innerHTML = `
-        <button type="button" class="button-text" style="font-size:12px;" onclick="viewResume('${currentProfile.resume_path}')">View current CV ↗</button>
+    const formCvLink = document.getElementById("form-current-cv-link");
+    if (formCvLink && currentProfile.resume_path) {
+      formCvLink.innerHTML = `
+        <span class="cv-present-badge">✓ Active CV on file. Uploading a new file will replace it.</span>
       `;
     }
   }
 
+  // Load Candidate Applications
   const appsContainer = document.querySelector("[data-candidate-applications]");
   const { data: apps } = await supabaseClient
     .from("applications")
@@ -695,7 +775,9 @@ async function loadProfilePage() {
     .eq("candidate_id", user.id)
     .order("created_at", { ascending: false });
 
-  document.querySelector("[data-candidate-apps-count]").textContent = `(${apps?.length || 0})`;
+  const appsCountEl = document.querySelector("[data-candidate-apps-count]");
+  if (appsCountEl) appsCountEl.textContent = `(${apps?.length || 0})`;
+  
   if (appsContainer) {
     appsContainer.innerHTML = apps && apps.length ? apps.map((a) => `
       <article class="application">
@@ -709,13 +791,16 @@ async function loadProfilePage() {
     `).join("") : '<p class="empty-admin">You have not applied for any roles yet.</p>';
   }
 
+  // Load Saved Roles
   const savedContainer = document.querySelector("[data-candidate-saved]");
   const { data: saved } = await supabaseClient
     .from("saved_jobs")
     .select("id, jobs(*)")
     .eq("candidate_id", user.id);
 
-  document.querySelector("[data-candidate-saved-count]").textContent = `(${saved?.length || 0})`;
+  const savedCountEl = document.querySelector("[data-candidate-saved-count]");
+  if (savedCountEl) savedCountEl.textContent = `(${saved?.length || 0})`;
+  
   if (savedContainer) {
     savedContainer.innerHTML = saved && saved.length ? saved.map((s) => `
       <article class="application">
@@ -728,49 +813,53 @@ async function loadProfilePage() {
     `).join("") : '<p class="empty-admin">You have no saved roles.</p>';
   }
 
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const msg = form.querySelector(".form-message");
-    showMessage(msg, "Saving changes...");
+  // Save Profile Handler
+  if (form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = form.querySelector(".form-message");
+      showMessage(msg, "Saving changes...");
 
-    let cvPath = currentProfile?.resume_path;
-    const file = form.resume_file.files[0];
-    if (file) {
-      const ext = file.name.split(".").pop().toLowerCase();
-      cvPath = `${user.id}/${Date.now()}.${ext}`;
-      await supabaseClient.storage.from("resumes").upload(cvPath, file, { upsert: true });
-    }
+      let cvPath = currentProfile?.resume_path;
+      const file = form.resume_file.files[0];
+      if (file) {
+        const ext = file.name.split(".").pop().toLowerCase();
+        cvPath = `${user.id}/${Date.now()}.${ext}`;
+        await supabaseClient.storage.from("resumes").upload(cvPath, file, { upsert: true });
+      }
 
-    const firstName = form.first_name.value.trim();
-    const lastName = form.last_name.value.trim();
-    const fullName = `${firstName} ${lastName}`.trim();
+      const firstName = form.first_name.value.trim();
+      const lastName = form.last_name.value.trim();
+      const fullName = `${firstName} ${lastName}`.trim();
 
-    const { error } = await supabaseClient.from("profiles").update({
-      first_name: firstName,
-      last_name: lastName,
-      full_name: fullName,
-      phone: form.phone.value.trim(),
-      gender: form.gender.value,
-      skills: form.skills.value.trim(),
-      experience: form.experience.value.trim(),
-      education: form.education.value.trim(),
-      preferred_location: form.preferred_location.value.trim(),
-      salary_expectations: form.salary_expectations.value.trim(),
-      work_authorization: form.work_authorization.value.trim(),
-      resume_path: cvPath,
-      updated_at: new Date().toISOString()
-    }).eq("id", user.id);
+      const { error } = await supabaseClient.from("profiles").update({
+        first_name: firstName,
+        last_name: lastName,
+        full_name: fullName,
+        phone: form.phone.value.trim(),
+        gender: form.gender.value,
+        skills: form.skills.value.trim(),
+        experience: form.experience.value.trim(),
+        education: form.education.value.trim(),
+        preferred_location: form.preferred_location.value.trim(),
+        salary_expectations: form.salary_expectations.value.trim(),
+        work_authorization: form.work_authorization.value.trim(),
+        resume_path: cvPath,
+        updated_at: new Date().toISOString()
+      }).eq("id", user.id);
 
-    if (error) {
-      showMessage(msg, error.message, true);
-    } else {
-      showMessage(msg, "Profile updated successfully!");
-      await refreshCurrentUser();
-      document.querySelector("[data-profile-name]").textContent = fullName || "My Dashboard";
-    }
-  };
+      if (error) {
+        showMessage(msg, error.message, true);
+      } else {
+        showMessage(msg, "Profile updated successfully!");
+        await refreshCurrentUser();
+        setTimeout(() => {
+          loadProfilePage();
+        }, 800);
+      }
+    };
+  }
 }
-
 // ----------------------------------------------------
 // PAGE: ADMIN CONTROL CENTER (admin.html)
 // ----------------------------------------------------
