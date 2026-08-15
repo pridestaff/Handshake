@@ -101,7 +101,7 @@ function setupAuthModal() {
   const signupFields = form.querySelector("[data-signup-fields]");
 
   const setMode = () => {
-    heading.textContent = isSignUp ? "Create your account" : "Sign in to your account";
+    heading.textContent = isSignUp ? "Create your account" : "Sign in to apply";
     submit.innerHTML = `${isSignUp ? "Create account" : "Sign in"} <span>→</span>`;
     toggle.textContent = isSignUp ? "Already have an account? Sign in" : "New here? Create an account";
     
@@ -210,7 +210,6 @@ function openApplicationModal(jobId, jobTitle = null, redirectUrl = null) {
   const guestPasswordField = document.getElementById("guest-password-field");
 
   if (currentUser) {
-    // Registered / Logged In Candidate
     emailInput.value = currentUser.email || "";
     emailInput.readOnly = true;
     if (guestPasswordField) guestPasswordField.hidden = true;
@@ -230,7 +229,6 @@ function openApplicationModal(jobId, jobTitle = null, redirectUrl = null) {
       }
     }
   } else {
-    // Non-Registered / Guest Candidate
     emailInput.value = "";
     emailInput.readOnly = false;
     nameInput.value = "";
@@ -265,7 +263,6 @@ function setupApplicationModal() {
     showMessage(msg, "Processing your application...");
 
     try {
-      // 1. If not logged in, auto-create their account or sign up
       if (!activeUser) {
         if (!guestPassword || guestPassword.length < 6) {
           throw new Error("Please create a password (at least 6 characters) for your candidate profile.");
@@ -296,7 +293,6 @@ function setupApplicationModal() {
       const userId = activeUser ? activeUser.id : crypto.randomUUID();
       let resumePath = currentProfile?.resume_path;
 
-      // 2. Upload Resume if provided
       if (file) {
         if (file.size > 5 * 1024 * 1024) throw new Error("Resume must be 5 MB or smaller.");
         const ext = file.name.split(".").pop().toLowerCase();
@@ -312,7 +308,6 @@ function setupApplicationModal() {
         throw new Error("Please upload a résumé file to submit your application.");
       }
 
-      // 3. Save Candidate Profile Updates
       if (activeUser) {
         await supabaseClient.from("profiles").update({
           full_name: candidateName,
@@ -321,7 +316,6 @@ function setupApplicationModal() {
         }).eq("id", activeUser.id);
       }
 
-      // 4. Insert Application Record
       const { error: appErr } = await supabaseClient.from("applications").insert({
         job_id: form.elements.jobId.value,
         candidate_id: userId,
@@ -337,9 +331,8 @@ function setupApplicationModal() {
 
       await refreshCurrentUser();
 
-      // 5. Handle Redirection if set
       if (pendingRedirectUrl && pendingRedirectUrl.trim() !== "") {
-        showMessage(msg, "Application submitted! Redirecting to the application portal...");
+        showMessage(msg, "Application submitted! Redirecting to application portal...");
         setTimeout(() => {
           window.location.href = pendingRedirectUrl;
         }, 1200);
@@ -555,20 +548,17 @@ async function initSingleJobPage() {
     return;
   }
 
-  // Update Page Title and Header
   document.title = `${job.title} | ${job.company_name || "Northstar Talent"}`;
   document.querySelector("[data-job-title]").textContent = job.title;
   document.querySelector("[data-job-department]").textContent = job.department || "General";
   document.querySelector("[data-job-company]").textContent = `${job.company_name || "Northstar Talent"} • Active Opening`;
 
-  // Status Pill
   const statusPill = document.querySelector("[data-job-status-pill]");
   if (statusPill) {
     statusPill.textContent = job.is_open ? "Active Opening" : "Position Closed";
     statusPill.className = `status-pill ${job.is_open ? 'status-hired' : 'status-rejected'}`;
   }
 
-  // Metadata Grid
   document.querySelector("[data-job-client]").textContent = job.company_name || "Northstar Talent";
   document.querySelector("[data-job-location]").textContent = job.location || "Remote";
   document.querySelector("[data-job-type]").textContent = job.employment_type || "Full-time";
@@ -576,7 +566,6 @@ async function initSingleJobPage() {
   document.querySelector("[data-job-deadline]").textContent = job.application_deadline || "Open until filled";
   document.querySelector("[data-job-date]").textContent = new Date(job.created_at).toLocaleDateString();
 
-  // Content Sections
   document.querySelector("[data-job-description]").textContent = job.description || "No overview provided.";
   document.querySelector("[data-job-responsibilities]").textContent = job.responsibilities || "• Collaborate with cross-functional teams to deliver key business outcomes.\n• Own and execute end-to-end deliverables within your domain.\n• Contribute to best practices, documentation, and continuous improvement.";
   document.querySelector("[data-job-requirements]").textContent = job.requirements || "• Relevant practical experience in the discipline.\n• Strong problem-solving and communication abilities.\n• Eligible to work in the specified location.";
@@ -584,7 +573,6 @@ async function initSingleJobPage() {
   if (loadingMsg) loadingMsg.hidden = true;
   if (fullDetails) fullDetails.hidden = false;
 
-  // Apply Job Action Trigger (Opens Modal Every Time)
   const handleApplyAction = () => {
     if (!job.is_open) return;
     openApplicationModal(job.id, job.title, job.redirect_url);
@@ -644,7 +632,6 @@ async function loadProfilePage() {
     }
   }
 
-  // Load Applications
   const appsContainer = document.querySelector("[data-candidate-applications]");
   const { data: apps } = await supabaseClient
     .from("applications")
@@ -666,7 +653,6 @@ async function loadProfilePage() {
     `).join("") : '<p class="empty-admin">You have not applied for any roles yet.</p>';
   }
 
-  // Load Saved Roles
   const savedContainer = document.querySelector("[data-candidate-saved]");
   const { data: saved } = await supabaseClient
     .from("saved_jobs")
@@ -779,7 +765,6 @@ async function initAdminPage() {
     checkAdmin();
   }));
 
-  // Job Modal (Create & Edit with Redirect URL)
   const jobDialog = document.querySelector("[data-job-dialog]");
   const jobForm = document.querySelector("[data-job-form]");
   document.querySelectorAll("[data-show-job-form]").forEach(btn => {
@@ -824,18 +809,8 @@ async function initAdminPage() {
     }
   });
 
-  // User Modal (Create & Edit)
   const userDialog = document.querySelector("[data-user-dialog]");
   const userForm = document.querySelector("[data-user-form]");
-  document.querySelectorAll("[data-show-user-form]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      userForm.reset();
-      userForm.user_id.value = "";
-      document.querySelector("[data-user-modal-title]").textContent = "Create Candidate Profile";
-      document.querySelector("[data-user-submit-btn]").innerHTML = "Create Candidate <span>→</span>";
-      userDialog.showModal();
-    });
-  });
 
   userForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -850,7 +825,6 @@ async function initAdminPage() {
       first_name: firstName,
       last_name: lastName,
       full_name: fullName,
-      email: userForm.email.value.trim(),
       phone: userForm.phone.value.trim(),
       gender: userForm.gender.value,
       role: userForm.role.value,
@@ -861,13 +835,7 @@ async function initAdminPage() {
       updated_at: new Date().toISOString()
     };
 
-    let res;
-    if (userId) {
-      res = await supabaseClient.from("profiles").update(payload).eq("id", userId);
-    } else {
-      payload.id = crypto.randomUUID();
-      res = await supabaseClient.from("profiles").insert(payload);
-    }
+    const res = await supabaseClient.from("profiles").update(payload).eq("id", userId);
 
     if (res.error) showMessage(msg, res.error.message, true);
     else {
@@ -901,7 +869,7 @@ async function renderAdminDashboard() {
   const inquiryCountEl = document.querySelector("[data-inquiry-count]");
   if (inquiryCountEl) inquiryCountEl.textContent = `(${inquiries.length})`;
 
-  // 1. Render Jobs with core-matched buttons
+  // 1. Render Jobs
   const jobsList = document.querySelector("[data-admin-jobs]");
   if (jobsList) {
     jobsList.innerHTML = allJobsCache.length ? allJobsCache.map((j) => `
@@ -921,7 +889,7 @@ async function renderAdminDashboard() {
     `).join("") : '<p class="empty-admin">No jobs posted yet.</p>';
   }
 
-  // 2. Render Applications with core-matched buttons
+  // 2. Render Applications
   const appsList = document.querySelector("[data-applications]");
   if (appsList) {
     appsList.innerHTML = allAppsCache.length ? allAppsCache.map((a) => `
@@ -950,7 +918,7 @@ async function renderAdminDashboard() {
     `).join("") : '<p class="empty-admin">No applications received yet.</p>';
   }
 
-  // 3. Render Users (Candidates Only) with core-matched buttons
+  // 3. Render Users (Candidates Only)
   const usersList = document.querySelector("[data-admin-users]");
   if (usersList) {
     usersList.innerHTML = allUsersCache.length ? allUsersCache.map((u) => `
@@ -969,7 +937,7 @@ async function renderAdminDashboard() {
     `).join("") : '<p class="empty-admin">No registered candidate users found.</p>';
   }
 
-  // 4. Render Contact Inquiries with core-matched buttons
+  // 4. Render Contact Inquiries
   const inquiriesList = document.querySelector("[data-admin-inquiries]");
   if (inquiriesList) {
     inquiriesList.innerHTML = inquiries.length ? inquiries.map((m) => `
