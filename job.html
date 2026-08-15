@@ -77,19 +77,16 @@
           <div id="job-loading-msg"><p class="empty-state">Loading job specification...</p></div>
 
           <div id="job-full-details" hidden>
-            <!-- 1. Role Scope & Overview -->
             <h2>Role Scope & Mission</h2>
             <div data-job-description style="white-space: pre-line; line-height: 1.75; font-size: 16px; color: var(--ink);"></div>
 
-            <!-- 2. Key Responsibilities -->
             <h2 style="margin-top: 45px;">Key Responsibilities</h2>
             <div data-job-responsibilities style="white-space: pre-line; line-height: 1.75; font-size: 16px; color: var(--ink);"></div>
 
-            <!-- 3. Requirements & Qualifications -->
             <h2 style="margin-top: 45px;">Candidate Requirements & Qualifications</h2>
             <div data-job-requirements style="white-space: pre-line; line-height: 1.75; font-size: 16px; color: var(--ink);"></div>
 
-            <!-- Clean Bottom Action Banner -->
+            <!-- Single Clean Bottom Action Banner -->
             <div style="margin-top: 55px; padding: 32px; background: var(--cream); border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
               <div>
                 <h3 style="margin: 0 0 6px; font-family: var(--serif); font-size: 22px;">Ready to take the next step?</h3>
@@ -123,25 +120,41 @@
       </section>
     </main>
 
-    <!-- Global Application Modal -->
+    <!-- Unified Application Modal (Works for Both Registered and Guest Candidates) -->
     <dialog class="apply-dialog" data-apply-dialog>
       <form class="apply-form" data-apply-form>
         <div class="dialog-heading">
-          <div><p class="eyebrow">Apply now</p><h2 data-application-title>Apply for this role</h2></div>
+          <div>
+            <p class="eyebrow">Application Form</p>
+            <h2 data-application-title>Apply for this role</h2>
+          </div>
           <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
         </div>
         <input type="hidden" name="jobId" />
-        <label>Full name<input required name="name" autocomplete="name" /></label>
-        <label>Email<input required name="email" type="email" autocomplete="email" readonly /></label>
-        <label>Phone<input required name="phone" autocomplete="tel" /></label>
+        
+        <label>Full Name<input required name="name" autocomplete="name" placeholder="e.g. Maya Rao" /></label>
+        
+        <div class="form-two">
+          <label>Email<input required name="email" type="email" autocomplete="email" placeholder="e.g. maya@example.com" /></label>
+          <label>Mobile Number<input required name="phone" autocomplete="tel" placeholder="e.g. +91 9876543210" /></label>
+        </div>
+
+        <div id="guest-password-field" hidden>
+          <label>Create Account Password <span class="small-label">Min 6 characters to track application later</span>
+            <input name="guest_password" type="password" minlength="6" placeholder="Choose a password" />
+          </label>
+        </div>
         
         <label>Résumé / CV <span class="small-label">PDF or DOC, up to 5 MB</span>
           <input name="resume" type="file" accept=".pdf,.doc,.docx" />
         </label>
         <div id="modal-cv-indicator" hidden></div>
 
-        <label>Cover note <span class="small-label">Optional</span><textarea name="message" rows="3" placeholder="Tell us why this role interests you."></textarea></label>
-        <button class="button button-primary" type="submit">Submit application <span>→</span></button>
+        <label>Cover Note <span class="small-label">Optional</span>
+          <textarea name="message" rows="3" placeholder="Tell us why this position interests you..."></textarea>
+        </label>
+        
+        <button class="button button-primary" type="submit" data-apply-submit-btn>Submit Application <span>→</span></button>
         <p class="form-message" role="status"></p>
       </form>
     </dialog>
@@ -150,7 +163,7 @@
     <dialog class="auth-dialog" data-auth-dialog>
       <form class="auth-form" data-auth-form>
         <div class="dialog-heading">
-          <div><p class="eyebrow">Candidate portal</p><h2 data-auth-heading>Sign in to apply</h2></div>
+          <div><p class="eyebrow">Candidate portal</p><h2 data-auth-heading>Sign in to your account</h2></div>
           <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
         </div>
         <div data-signup-fields hidden>
