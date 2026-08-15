@@ -5,6 +5,7 @@ let currentProfile = null;
 let allJobsCache = [];
 let allUsersCache = [];
 let allAppsCache = [];
+let userAppliedJobIds = new Set();
 let pendingJobId = null;
 let pendingJobTitle = null;
 let pendingRedirectUrl = null;
@@ -25,14 +26,20 @@ async function refreshCurrentUser() {
     currentUser = error ? null : data?.user;
     
     if (currentUser) {
-      const { data: profile } = await supabaseClient.from("profiles").select("*").eq("id", currentUser.id).maybeSingle();
+      const [{ data: profile }, { data: userApps }] = await Promise.all([
+        supabaseClient.from("profiles").select("*").eq("id", currentUser.id).maybeSingle(),
+        supabaseClient.from("applications").select("job_id").eq("candidate_id", currentUser.id)
+      ]);
       currentProfile = profile;
+      userAppliedJobIds = new Set((userApps || []).map((a) => String(a.job_id)));
     } else {
       currentProfile = null;
+      userAppliedJobIds = new Set();
     }
   } catch (err) {
     currentUser = null;
     currentProfile = null;
+    userAppliedJobIds = new Set();
   }
   
   updateNavState();
@@ -194,6 +201,12 @@ function openApplicationModal(jobId, jobTitle = null, redirectUrl = null) {
   pendingJobTitle = jobTitle;
   pendingRedirectUrl = redirectUrl;
 
+  // If already applied, prevent opening and inform candidate
+  if (currentUser && userAppliedJobIds.has(String(jobId))) {
+    alert("You have already submitted an application for this position.");
+    return;
+  }
+
   const dialog = document.querySelector("[data-apply-dialog]");
   if (!dialog) return;
 
@@ -258,6 +271,7 @@ function setupApplicationModal() {
     const candidateMessage = form.elements.message.value.trim();
     const file = form.elements.resume?.files?.[0];
     const guestPassword = form.elements.guest_password ? form.elements.guest_password.value : null;
+    const appliedJobId = form.elements.jobId.value;
 
     submitBtn.disabled = true;
     showMessage(msg, "Processing your application...");
@@ -317,7 +331,7 @@ function setupApplicationModal() {
       }
 
       const { error: appErr } = await supabaseClient.from("applications").insert({
-        job_id: form.elements.jobId.value,
+        job_id: appliedJobId,
         candidate_id: userId,
         full_name: candidateName,
         email: candidateEmail,
@@ -327,9 +341,23 @@ function setupApplicationModal() {
         status: "received"
       });
 
-      if (appErr && appErr.code !== "23505") throw appErr;
+      if (appErr && appErr.code === "23505") {
+        throw new Error("You have already submitted an application for this position.");
+      } else if (appErr) {
+        throw appErr;
+      }
 
+      userAppliedJobIds.add(String(appliedJobId));
       await refreshCurrentUser();
+
+      // Proactively update single job page button state to Already Applied
+      document.querySelectorAll("[data-apply-single-btn]").forEach(btn => {
+        btn.disabled = true;
+        btn.innerHTML = "Already Applied ✓";
+        btn.style.background = "var(--muted)";
+        btn.style.borderColor = "var(--muted)";
+        btn.style.cursor = "default";
+      });
 
       if (pendingRedirectUrl && pendingRedirectUrl.trim() !== "") {
         showMessage(msg, "Application submitted! Redirecting to application portal...");
@@ -425,17 +453,24 @@ async function initHomePage() {
     return;
   }
 
-  container.innerHTML = jobs.map((j) => `
-    <article class="job-card" style="cursor: pointer;" onclick="window.location.href='job.html?id=${j.id}'">
-      <div>
-        <h3 class="job-title"><a href="job.html?id=${j.id}" style="color:inherit;">${escapeHtml(j.title)}</a> ${j.is_featured ? '<span class="featured-badge">Featured</span>' : ''}</h3>
-        <p class="job-meta">${escapeHtml(j.department)} · ${escapeHtml(j.employment_type)}</p>
-      </div>
-      <p class="job-detail">${escapeHtml(j.location)}</p>
-      <button class="job-save-btn" data-save="${j.id}" title="Save role" onclick="event.stopPropagation();">♡</button>
-      <a class="job-arrow" href="job.html?id=${j.id}" aria-label="View role details">→</a>
-    </article>
-  `).join("");
+  container.innerHTML = jobs.map((j) => {
+    const isApplied = userAppliedJobIds.has(String(j.id));
+    return `
+      <article class="job-card" style="cursor: pointer;" onclick="window.location.href='job.html?id=${j.id}'">
+        <div>
+          <h3 class="job-title">
+            <a href="job.html?id=${j.id}" style="color:inherit;">${escapeHtml(j.title)}</a> 
+            ${j.is_featured ? '<span class="featured-badge">Featured</span>' : ''}
+            ${isApplied ? '<span class="status-pill status-hired" style="font-size:10px; margin-left:6px;">Applied ✓</span>' : ''}
+          </h3>
+          <p class="job-meta">${escapeHtml(j.department)} · ${escapeHtml(j.employment_type)}</p>
+        </div>
+        <p class="job-detail">${escapeHtml(j.location)}</p>
+        <button class="job-save-btn" data-save="${j.id}" title="Save role" onclick="event.stopPropagation();">♡</button>
+        <a class="job-arrow" href="job.html?id=${j.id}" aria-label="View role details">→</a>
+      </article>
+    `;
+  }).join("");
 
   container.querySelectorAll("[data-save]").forEach((btn) => {
     btn.addEventListener("click", () => toggleSaveJob(btn.dataset.save, btn));
@@ -504,17 +539,23 @@ async function initJobsPage() {
       if (noMsg) noMsg.hidden = false;
     } else {
       if (noMsg) noMsg.hidden = true;
-      container.innerHTML = filtered.map((j) => `
-        <article class="job-card" style="cursor: pointer;" onclick="window.location.href='job.html?id=${j.id}'">
-          <div>
-            <h3 class="job-title"><a href="job.html?id=${j.id}" style="color:inherit;">${escapeHtml(j.title)}</a></h3>
-            <p class="job-meta">${escapeHtml(j.department)} · ${escapeHtml(j.employment_type)} ${j.salary_range ? `· ${escapeHtml(j.salary_range)}` : ''}</p>
-          </div>
-          <p class="job-detail">${escapeHtml(j.location)}</p>
-          <button class="job-save-btn" data-save="${j.id}" title="Save role" onclick="event.stopPropagation();">♡</button>
-          <a class="job-arrow" href="job.html?id=${j.id}" aria-label="View job">→</a>
-        </article>
-      `).join("");
+      container.innerHTML = filtered.map((j) => {
+        const isApplied = userAppliedJobIds.has(String(j.id));
+        return `
+          <article class="job-card" style="cursor: pointer;" onclick="window.location.href='job.html?id=${j.id}'">
+            <div>
+              <h3 class="job-title">
+                <a href="job.html?id=${j.id}" style="color:inherit;">${escapeHtml(j.title)}</a>
+                ${isApplied ? '<span class="status-pill status-hired" style="font-size:10px; margin-left:6px;">Applied ✓</span>' : ''}
+              </h3>
+              <p class="job-meta">${escapeHtml(j.department)} · ${escapeHtml(j.employment_type)} ${j.salary_range ? `· ${escapeHtml(j.salary_range)}` : ''}</p>
+            </div>
+            <p class="job-detail">${escapeHtml(j.location)}</p>
+            <button class="job-save-btn" data-save="${j.id}" title="Save role" onclick="event.stopPropagation();">♡</button>
+            <a class="job-arrow" href="job.html?id=${j.id}" aria-label="View job">→</a>
+          </article>
+        `;
+      }).join("");
       
       container.querySelectorAll("[data-save]").forEach((btn) => {
         btn.addEventListener("click", () => toggleSaveJob(btn.dataset.save, btn));
@@ -573,15 +614,30 @@ async function initSingleJobPage() {
   if (loadingMsg) loadingMsg.hidden = true;
   if (fullDetails) fullDetails.hidden = false;
 
+  // Check if current user already applied for this specific job
+  const hasApplied = userAppliedJobIds.has(String(job.id));
+
   const handleApplyAction = () => {
-    if (!job.is_open) return;
+    if (!job.is_open || hasApplied) return;
     openApplicationModal(job.id, job.title, job.redirect_url);
   };
 
   document.querySelectorAll("[data-apply-single-btn]").forEach(btn => {
-    btn.disabled = !job.is_open;
-    btn.innerHTML = job.is_open ? "Apply Job <span>→</span>" : "Position Closed";
-    if (job.is_open) {
+    if (!job.is_open) {
+      btn.disabled = true;
+      btn.innerHTML = "Position Closed";
+    } else if (hasApplied) {
+      btn.disabled = true;
+      btn.innerHTML = "Already Applied ✓";
+      btn.style.background = "var(--muted)";
+      btn.style.borderColor = "var(--muted)";
+      btn.style.cursor = "default";
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = "Apply Job <span>→</span>";
+      btn.style.background = "var(--ink)";
+      btn.style.borderColor = "transparent";
+      btn.style.cursor = "pointer";
       btn.onclick = handleApplyAction;
     }
   });
