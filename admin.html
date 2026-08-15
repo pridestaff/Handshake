@@ -46,9 +46,9 @@
             <h1>Agency Management</h1>
           </div>
           <div class="admin-actions">
-            <button class="button button-text" data-admin-sign-out>Sign out</button>
-            <button class="button button-primary" data-show-job-form>+ Add New Job</button>
-            <button class="button button-primary" data-show-user-form style="background: var(--peach);">+ Add Candidate</button>
+            <button class="btn-ctrl" data-admin-sign-out>Sign out</button>
+            <button class="btn-ctrl btn-ctrl-primary" data-show-job-form>+ Add New Job</button>
+            <button class="btn-ctrl" data-show-user-form style="border-color: var(--peach); color: var(--peach);">+ Add Candidate</button>
           </div>
         </div>
 
@@ -57,7 +57,7 @@
           <div class="admin-card vertical-section">
             <div class="section-card-header">
               <h2>1. Jobs Management <span data-job-count></span></h2>
-              <button class="button button-text" style="font-size: 13px;" data-show-job-form>+ Create Job</button>
+              <button class="btn-ctrl btn-ctrl-primary" style="font-size: 11px; padding: 5px 12px;" data-show-job-form>+ Create Job</button>
             </div>
             <div class="admin-job-list" data-admin-jobs>
               <p class="empty-admin">Loading jobs...</p>
@@ -74,11 +74,11 @@
             </div>
           </div>
 
-          <!-- 3. Registered Candidates (Excludes Admins) -->
+          <!-- 3. Registered Candidates & Users (Excludes Admins) -->
           <div class="admin-card vertical-section">
             <div class="section-card-header">
               <h2>3. Registered Candidates & Users <span data-user-count></span></h2>
-              <button class="button button-text" style="font-size: 13px;" data-show-user-form>+ Create Candidate Profile</button>
+              <button class="btn-ctrl" style="font-size: 11px; padding: 5px 12px;" data-show-user-form>+ Create Candidate Profile</button>
             </div>
             <div class="admin-job-list" data-admin-users>
               <p class="empty-admin">Loading users...</p>
@@ -135,7 +135,7 @@
             </label>
           </div>
 
-          <label>Custom Redirection URL <span class="small-label">Optional — Will redirect here after applying</span>
+          <label>Custom Redirection URL <span class="small-label">Optional — Will redirect here after candidate applies</span>
             <input name="redirect_url" type="url" placeholder="e.g. https://company-careers-portal.com/job/102" />
           </label>
 
@@ -223,8 +223,8 @@
             </div>
           </div>
           <div class="button-row">
-            <button class="button button-primary" type="button" data-view-app-cv-btn>Download CV / Resume ↗</button>
-            <button class="button button-text" type="button" data-close-dialog>Close</button>
+            <button class="btn-ctrl btn-ctrl-primary" type="button" data-view-app-cv-btn>Download CV / Resume ↗</button>
+            <button class="btn-ctrl" type="button" data-close-dialog>Close</button>
           </div>
         </div>
       </dialog>
