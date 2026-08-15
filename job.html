@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job Details | Northstar Talent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="supabase-config.js" defer></script>
+    <script src="script.js" defer></script>
+  </head>
+  <body data-page="single-job">
+    <header class="site-header">
+      <a class="brand" href="index.html"><span class="brand-mark">N</span>Northstar <em>Talent</em></a>
+      <button class="menu-button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="jobs.html" style="opacity: 1; border-color: var(--peach);">Browse Jobs</a>
+        <a href="profile.html" class="nav-profile-link" hidden>My Dashboard</a>
+        <a href="index.html#about">About</a>
+        <a href="index.html#contact">Contact</a>
+        <button class="nav-sign-in" type="button" data-open-auth>Sign in</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Header Banner with Key Metadata -->
+      <section class="job-single-header">
+        <div class="section-wrap" data-job-header>
+          <a href="jobs.html" class="text-link" style="margin-bottom: 20px; font-size: 13px;">← Back to all vacancies</a>
+          
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
+            <p class="eyebrow" data-job-department style="margin: 0;">Department</p>
+            <span data-job-status-pill class="status-pill status-hired">Active Opening</span>
+          </div>
+
+          <h1 data-job-title style="margin: 12px 0 6px;">Loading Position…</h1>
+          <p class="job-detail" data-job-company style="font-size: 17px; color: var(--muted); margin: 0;"></p>
+
+          <!-- Structured Metadata Grid -->
+          <div class="job-meta-grid">
+            <div>
+              <strong>Hiring Company</strong>
+              <span data-job-client>—</span>
+            </div>
+            <div>
+              <strong>Location & Policy</strong>
+              <span data-job-location>—</span>
+            </div>
+            <div>
+              <strong>Employment Type</strong>
+              <span data-job-type>—</span>
+            </div>
+            <div>
+              <strong>Compensation Range</strong>
+              <span data-job-salary>—</span>
+            </div>
+            <div>
+              <strong>Application Deadline</strong>
+              <span data-job-deadline>Open until filled</span>
+            </div>
+            <div>
+              <strong>Date Published</strong>
+              <span data-job-date>—</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Detailed Content -->
+      <section class="section-wrap job-single-content">
+        <!-- Left Column: Scope, Responsibilities, Requirements -->
+        <div class="job-main-body">
+          <div id="job-loading-msg"><p class="empty-state">Loading job specification...</p></div>
+
+          <div id="job-full-details" hidden>
+            <!-- 1. Role Scope & Overview -->
+            <h2>Role Scope & Mission</h2>
+            <div data-job-description style="white-space: pre-line; line-height: 1.75; font-size: 16px; color: var(--ink);"></div>
+
+            <!-- 2. Key Responsibilities -->
+            <h2 style="margin-top: 45px;">Key Responsibilities</h2>
+            <div data-job-responsibilities style="white-space: pre-line; line-height: 1.75; font-size: 16px; color: var(--ink);"></div>
+
+            <!-- 3. Requirements & Qualifications -->
+            <h2 style="margin-top: 45px;">Candidate Requirements & Qualifications</h2>
+            <div data-job-requirements style="white-space: pre-line; line-height: 1.75; font-size: 16px; color: var(--ink);"></div>
+
+            <!-- Bottom Action Banner with Apply Job Button -->
+            <div style="margin-top: 55px; padding: 32px; background: var(--cream); border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: gap; gap: 20px;">
+              <div>
+                <h3 style="margin: 0 0 6px; font-family: var(--serif); font-size: 22px;">Ready to take the next step?</h3>
+                <p style="margin: 0; color: var(--muted); font-size: 14px;">Apply directly to get connected with the hiring team.</p>
+              </div>
+              <button class="button button-primary" type="button" data-apply-single-btn style="font-size: 15px; padding: 14px 30px;">
+                Apply Job <span>→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Sidebar Action Box -->
+        <aside class="job-sidebar">
+          <div class="job-sidebar-card">
+            <h3 style="font-family: var(--serif); font-size: 22px; margin-bottom: 10px;">Ready to apply?</h3>
+            <p style="font-size: 14px; color: var(--muted); margin-bottom: 22px; line-height: 1.5;">Submit your CV and contact information directly to our hiring team.</p>
+            
+            <button class="button button-primary" type="button" data-apply-single-btn style="width: 100%; justify-content: center; margin-bottom: 10px;">
+              Apply Job <span>→</span>
+            </button>
+            
+            <button class="button button-text" type="button" data-save-single-btn style="width: 100%; justify-content: center; font-size: 13px;">
+              Save Job ♡
+            </button>
+
+            <hr style="border: 0; border-top: 1px solid var(--line); margin: 24px 0 18px;" />
+            <p style="font-size: 12px; color: var(--muted); margin: 0;">Applications are reviewed by Northstar Talent recruiters on a rolling basis.</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <!-- Global Application Modal -->
+    <dialog class="apply-dialog" data-apply-dialog>
+      <form class="apply-form" data-apply-form>
+        <div class="dialog-heading">
+          <div><p class="eyebrow">Apply now</p><h2 data-application-title>Apply for this role</h2></div>
+          <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
+        </div>
+        <input type="hidden" name="jobId" />
+        <label>Full name<input required name="name" autocomplete="name" /></label>
+        <label>Email<input required name="email" type="email" autocomplete="email" readonly /></label>
+        <label>Phone<input required name="phone" autocomplete="tel" /></label>
+        <label>Résumé <span class="small-label">PDF or DOC, up to 5 MB</span><input required type="file" name="resume" accept=".pdf,.doc,.docx" /></label>
+        <label>Cover note <span class="small-label">Optional</span><textarea name="message" rows="3" placeholder="Tell us why this role interests you."></textarea></label>
+        <button class="button button-primary" type="submit">Submit application <span>→</span></button>
+        <p class="form-message" role="status"></p>
+      </form>
+    </dialog>
+
+    <!-- Global Auth Modal -->
+    <dialog class="auth-dialog" data-auth-dialog>
+      <form class="auth-form" data-auth-form>
+        <div class="dialog-heading">
+          <div><p class="eyebrow">Candidate portal</p><h2 data-auth-heading>Sign in to apply</h2></div>
+          <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
+        </div>
+        <div data-signup-fields hidden>
+          <div class="form-two">
+            <label>First Name<input name="first_name" placeholder="e.g. Maya" autocomplete="given-name" /></label>
+            <label>Last Name<input name="last_name" placeholder="e.g. Rao" autocomplete="family-name" /></label>
+          </div>
+          <div class="form-two" style="margin-top: 10px;">
+            <label>Mobile No<input name="phone" type="tel" placeholder="e.g. +91 9876543210" autocomplete="tel" /></label>
+            <label>Gender
+              <select name="gender">
+                <option value="">Select gender</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+                <option value="Non-binary">Non-binary</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <label>Email<input required type="email" name="email" autocomplete="email" /></label>
+        <label>Password<input required type="password" name="password" autocomplete="current-password" minlength="6" /></label>
+        <button class="button button-primary" type="submit" data-auth-submit>Sign in <span>→</span></button>
+        <p class="form-message" role="status"></p>
+        <button type="button" class="auth-toggle" data-auth-toggle>New here? Create an account</button>
+      </form>
+    </dialog>
+
+    <footer class="site-footer">
+      <a class="brand" href="index.html"><span class="brand-mark">N</span>Northstar <em>Talent</em></a>
+      <p>Thoughtful recruitment for people and teams.</p>
+      <div><span>© <span data-year></span> Northstar Talent</span></div>
+    </footer>
+  </body>
+</html>
