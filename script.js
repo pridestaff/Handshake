@@ -40,6 +40,38 @@ function updateNavState() {
   });
 }
 
+function bindTagCloud(cloudContainer, targetInput) {
+  if (!cloudContainer || !targetInput) return;
+
+  const syncInputToTags = () => {
+    const activeTags = Array.from(cloudContainer.querySelectorAll(".tag-chip.active")).map((c) => c.dataset.tag);
+    const typedTags = targetInput.value
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t && !activeTags.includes(t));
+    
+    targetInput.value = [...activeTags, ...typedTags].join(", ");
+  };
+
+  const syncTagsToInput = () => {
+    const currentTags = targetInput.value.split(",").map((t) => t.trim().toLowerCase());
+    cloudContainer.querySelectorAll(".tag-chip").forEach((chip) => {
+      const tagVal = chip.dataset.tag.toLowerCase();
+      chip.classList.toggle("active", currentTags.includes(tagVal));
+    });
+  };
+
+  cloudContainer.querySelectorAll(".tag-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      chip.classList.toggle("active");
+      syncInputToTags();
+    });
+  });
+
+  targetInput.addEventListener("input", syncTagsToInput);
+  syncTagsToInput();
+}
+
 function openAuthDialog(heading = "Sign in to your account") {
   const dialog = document.querySelector("[data-auth-dialog]");
   if (!dialog) return;
@@ -56,11 +88,21 @@ function setupAuthModal() {
   const submit = form.querySelector("[data-auth-submit]");
   const toggle = form.querySelector("[data-auth-toggle]");
   const message = form.querySelector(".form-message");
+  const signupFields = form.querySelector("[data-signup-fields]");
 
   const setMode = () => {
     heading.textContent = isSignUp ? "Create your account" : "Sign in to your account";
     submit.innerHTML = `${isSignUp ? "Create account" : "Sign in"} <span>→</span>`;
     toggle.textContent = isSignUp ? "Already have an account? Sign in" : "New here? Create an account";
+    
+    if (signupFields) {
+      signupFields.hidden = !isSignUp;
+      form.elements.first_name.required = isSignUp;
+      form.elements.last_name.required = isSignUp;
+      form.elements.phone.required = isSignUp;
+      form.elements.gender.required = isSignUp;
+    }
+    
     showMessage(message, "");
   };
 
@@ -71,23 +113,66 @@ function setupAuthModal() {
     const email = form.elements.email.value.trim();
     const password = form.elements.password.value;
     submit.disabled = true;
-    showMessage(message, "Processing...");
+    showMessage(message, isSignUp ? "Creating your account..." : "Signing you in...");
 
-    const res = isSignUp
-      ? await supabaseClient.auth.signUp({ email, password })
-      : await supabaseClient.auth.signInWithPassword({ email, password });
+    try {
+      if (isSignUp) {
+        const firstName = form.elements.first_name.value.trim();
+        const lastName = form.elements.last_name.value.trim();
+        const phone = form.elements.phone.value.trim();
+        const gender = form.elements.gender.value;
 
-    submit.disabled = false;
-    if (res.error) {
-      showMessage(message, res.error.message, true);
-      return;
+        if (!firstName || !lastName || !phone || !gender) {
+          throw new Error("Please fill in First Name, Last Name, Mobile Number, and Gender.");
+        }
+
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+              full_name: fullName,
+              phone: phone,
+              gender: gender
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        if (data?.user) {
+          await supabaseClient.from("profiles").upsert({
+            id: data.user.id,
+            first_name: firstName,
+            last_name: lastName,
+            full_name: fullName,
+            email: email,
+            phone: phone,
+            gender: gender,
+            role: "candidate"
+          });
+        }
+
+        showMessage(message, "Account created successfully!");
+      } else {
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+
+      await refreshCurrentUser();
+      form.reset();
+      form.closest("dialog").close();
+      if (pendingJobId) openApplicationModal(pendingJobId);
+      if (window.location.pathname.includes("profile.html")) loadProfilePage();
+    } catch (err) {
+      showMessage(message, err.message, true);
+    } finally {
+      submit.disabled = false;
     }
-
-    await refreshCurrentUser();
-    form.reset();
-    form.closest("dialog").close();
-    if (pendingJobId) openApplicationModal(pendingJobId);
-    if (window.location.pathname.includes("profile.html")) loadProfilePage();
   });
 }
 
@@ -111,48 +196,57 @@ function setupApplicationModal() {
     }
 
     const file = form.elements.resume.files[0];
-    if (!file) { showMessage(msg, "Please choose a résumé file.", true); return; }
-    if (file.size > 5 * 1024 * 1024) { showMessage(msg, "CV file must be 5 MB or smaller.", true); return; }
+    let resumePath = currentProfile?.resume_path;
 
-    const ext = file.name.split(".").pop().toLowerCase();
+    if (!file && !resumePath) {
+      showMessage(msg, "Please upload your résumé file.", true);
+      return;
+    }
+
     const submitBtn = form.querySelector('[type="submit"]');
     submitBtn.disabled = true;
-    showMessage(msg, "Uploading CV securely...");
 
-    const path = `${user.id}/${Date.now()}.${ext}`;
-    const { error: upErr } = await supabaseClient.storage.from("resumes").upload(path, file, { upsert: true });
-    if (upErr) {
+    try {
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) throw new Error("Resume must be 5 MB or smaller.");
+        const ext = file.name.split(".").pop().toLowerCase();
+        if (!['pdf', 'doc', 'docx'].includes(ext)) throw new Error("Please upload a PDF or DOC/DOCX file.");
+
+        showMessage(msg, "Uploading résumé securely...");
+        resumePath = `${user.id}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabaseClient.storage.from("resumes").upload(resumePath, file, { upsert: true });
+        if (upErr) throw upErr;
+      }
+
+      await supabaseClient.from("profiles").update({
+        full_name: form.elements.name.value.trim(),
+        phone: form.elements.phone.value.trim(),
+        resume_path: resumePath
+      }).eq("id", user.id);
+
+      const { error: appErr } = await supabaseClient.from("applications").insert({
+        job_id: form.elements.jobId.value,
+        candidate_id: user.id,
+        full_name: form.elements.name.value.trim(),
+        email: user.email,
+        phone: form.elements.phone.value.trim(),
+        message: form.elements.message.value.trim() || null,
+        resume_path: resumePath,
+        status: "received"
+      });
+
+      if (appErr) {
+        if (appErr.code === "23505") throw new Error("You have already applied for this position.");
+        throw appErr;
+      }
+
+      showMessage(msg, "Application submitted successfully!");
+      setTimeout(() => { form.reset(); form.closest("dialog").close(); }, 1500);
+    } catch (err) {
+      showMessage(msg, err.message, true);
+    } finally {
       submitBtn.disabled = false;
-      showMessage(msg, upErr.message, true);
-      return;
     }
-
-    // Save profile contact details & apply
-    await supabaseClient.from("profiles").update({
-      full_name: form.elements.name.value.trim(),
-      phone: form.elements.phone.value.trim(),
-      resume_path: path
-    }).eq("id", user.id);
-
-    const { error: appErr } = await supabaseClient.from("applications").insert({
-      job_id: form.elements.jobId.value,
-      candidate_id: user.id,
-      full_name: form.elements.name.value.trim(),
-      email: user.email,
-      phone: form.elements.phone.value.trim(),
-      message: form.elements.message.value.trim() || null,
-      resume_path: path,
-      status: "received"
-    });
-
-    submitBtn.disabled = false;
-    if (appErr) {
-      showMessage(msg, appErr.code === "23505" ? "You have already applied for this role." : appErr.message, true);
-      return;
-    }
-
-    showMessage(msg, "Application submitted successfully!");
-    setTimeout(() => { form.reset(); form.closest("dialog").close(); }, 1500);
   });
 }
 
@@ -169,10 +263,12 @@ function openApplicationModal(jobId) {
   dialog.querySelector("[data-application-title]").textContent = `Apply for ${job.title}`;
   dialog.querySelector('[name="jobId"]').value = job.id;
   dialog.querySelector('[name="email"]').value = currentUser.email || "";
+  
   if (currentProfile) {
-    dialog.querySelector('[name="name"]').value = currentProfile.full_name || "";
+    dialog.querySelector('[name="name"]').value = currentProfile.full_name || `${currentProfile.first_name || ''} ${currentProfile.last_name || ''}`.trim();
     dialog.querySelector('[name="phone"]').value = currentProfile.phone || "";
   }
+  
   showMessage(dialog.querySelector(".form-message"), "");
   dialog.showModal();
 }
@@ -192,11 +288,6 @@ async function toggleSaveJob(jobId, btn) {
   }
 }
 
-// ----------------------------------------------------
-// PAGE-SPECIFIC INITIALIZATIONS
-// ----------------------------------------------------
-
-// 1. Homepage (index.html)
 async function initHomePage() {
   const container = document.querySelector("[data-featured-jobs]");
   if (!container) return;
@@ -223,7 +314,7 @@ async function initHomePage() {
         <p class="job-meta">${escapeHtml(j.department)} · ${escapeHtml(j.employment_type)}</p>
       </div>
       <p class="job-detail">${escapeHtml(j.location)}</p>
-      <button class="job-save-btn" data-save="${j.id}" title="Save job">♡</button>
+      <button class="job-save-btn" data-save="${j.id}" title="Save role">♡</button>
       <button class="job-arrow" aria-label="Apply" data-apply="${j.id}">→</button>
     </article>
   `).join("");
@@ -231,7 +322,6 @@ async function initHomePage() {
   bindJobEvents(container);
 }
 
-// 2. All Jobs Page (jobs.html)
 async function initJobsPage() {
   const container = document.querySelector("[data-all-jobs]");
   const noMsg = document.querySelector("[data-no-jobs-msg]");
@@ -240,17 +330,35 @@ async function initJobsPage() {
   const { data: jobs } = await supabaseClient.from("jobs").select("*").eq("is_open", true).order("created_at", { ascending: false });
   allJobsCache = jobs || [];
 
-  // Populate dynamic filter dropdowns
   const deptSelect = document.querySelector("[data-filter-department]");
   const locSelect = document.querySelector("[data-filter-location]");
   const typeSelect = document.querySelector("[data-filter-type]");
   const searchInput = document.querySelector("[data-filter-search]");
+  const chipContainer = document.querySelector("[data-job-filter-chips]");
 
   const depts = [...new Set(allJobsCache.map((j) => j.department).filter(Boolean))];
   const locs = [...new Set(allJobsCache.map((j) => j.location).filter(Boolean))];
 
   depts.forEach((d) => deptSelect.innerHTML += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`);
   locs.forEach((l) => locSelect.innerHTML += `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`);
+
+  let activeFilterTag = "";
+
+  if (chipContainer) {
+    chipContainer.querySelectorAll(".tag-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        if (chip.classList.contains("active")) {
+          chip.classList.remove("active");
+          activeFilterTag = "";
+        } else {
+          chipContainer.querySelectorAll(".tag-chip").forEach((c) => c.classList.remove("active"));
+          chip.classList.add("active");
+          activeFilterTag = chip.dataset.tag.toLowerCase();
+        }
+        applyFilters();
+      });
+    });
+  }
 
   const applyFilters = () => {
     const q = searchInput.value.toLowerCase().trim();
@@ -259,11 +367,13 @@ async function initJobsPage() {
     const selType = typeSelect.value;
 
     const filtered = allJobsCache.filter((j) => {
-      const matchQ = `${j.title} ${j.department} ${j.location} ${j.description}`.toLowerCase().includes(q);
+      const fullText = `${j.title} ${j.department} ${j.location} ${j.description} ${j.employment_type}`.toLowerCase();
+      const matchQ = fullText.includes(q);
+      const matchTag = !activeFilterTag || fullText.includes(activeFilterTag);
       const matchDept = !selDept || j.department === selDept;
       const matchLoc = !selLoc || j.location === selLoc;
       const matchType = !selType || j.employment_type === selType;
-      return matchQ && matchDept && matchLoc && matchType;
+      return matchQ && matchTag && matchDept && matchLoc && matchType;
     });
 
     if (filtered.length === 0) {
@@ -278,7 +388,7 @@ async function initJobsPage() {
             <p class="job-meta">${escapeHtml(j.department)} · ${escapeHtml(j.employment_type)} ${j.salary_range ? `· ${escapeHtml(j.salary_range)}` : ''}</p>
           </div>
           <p class="job-detail">${escapeHtml(j.location)}</p>
-          <button class="job-save-btn" data-save="${j.id}" title="Save job">♡</button>
+          <button class="job-save-btn" data-save="${j.id}" title="Save role">♡</button>
           <button class="job-arrow" aria-label="Apply" data-apply="${j.id}">→</button>
         </article>
       `).join("");
@@ -295,7 +405,6 @@ function bindJobEvents(container) {
   container.querySelectorAll("[data-save]").forEach((btn) => btn.addEventListener("click", () => toggleSaveJob(btn.dataset.save, btn)));
 }
 
-// 3. Candidate Profile & Tracker Page (profile.html)
 async function loadProfilePage() {
   const user = await refreshCurrentUser();
   if (!user) {
@@ -306,25 +415,30 @@ async function loadProfilePage() {
   document.querySelector("[data-profile-name]").textContent = currentProfile?.full_name || "My Dashboard";
   document.querySelector("[data-profile-email]").textContent = user.email;
 
-  // Prefill Form
   const form = document.querySelector("[data-profile-form]");
   if (form && currentProfile) {
-    form.full_name.value = currentProfile.full_name || "";
+    form.first_name.value = currentProfile.first_name || "";
+    form.last_name.value = currentProfile.last_name || "";
     form.phone.value = currentProfile.phone || "";
+    form.gender.value = currentProfile.gender || "";
     form.skills.value = currentProfile.skills || "";
     form.experience.value = currentProfile.experience || "";
+    form.education.value = currentProfile.education || "";
     form.preferred_location.value = currentProfile.preferred_location || "";
     form.salary_expectations.value = currentProfile.salary_expectations || "";
     form.work_authorization.value = currentProfile.work_authorization || "";
 
+    bindTagCloud(document.querySelector("[data-skill-chips]"), form.skills);
+    bindTagCloud(document.querySelector("[data-industry-chips]"), form.skills);
+
     if (currentProfile.resume_path) {
       document.getElementById("current-cv-link").innerHTML = `
-        <button type="button" class="button-text" style="font-size:12px;" onclick="viewResume('${currentProfile.resume_path}')">View uploaded CV ↗</button>
+        <button type="button" class="button-text" style="font-size:12px;" onclick="viewResume('${currentProfile.resume_path}')">View current CV ↗</button>
       `;
     }
   }
 
-  // Load Candidate Applications
+  // Load Applications
   const appsContainer = document.querySelector("[data-candidate-applications]");
   const { data: apps } = await supabaseClient
     .from("applications")
@@ -346,7 +460,7 @@ async function loadProfilePage() {
     `).join("") : '<p class="empty-admin">You have not applied for any roles yet.</p>';
   }
 
-  // Load Saved Jobs
+  // Load Saved Roles
   const savedContainer = document.querySelector("[data-candidate-saved]");
   const { data: saved } = await supabaseClient
     .from("saved_jobs")
@@ -363,10 +477,9 @@ async function loadProfilePage() {
           <a class="text-link" href="jobs.html">View on Job Board <span>→</span></a>
         </div>
       </article>
-    `).join("") : '<p class="empty-admin">You have no saved jobs.</p>';
+    `).join("") : '<p class="empty-admin">You have no saved roles.</p>';
   }
 
-  // Handle Profile Update
   form.onsubmit = async (e) => {
     e.preventDefault();
     const msg = form.querySelector(".form-message");
@@ -375,16 +488,24 @@ async function loadProfilePage() {
     let cvPath = currentProfile?.resume_path;
     const file = form.resume_file.files[0];
     if (file) {
-      const ext = file.name.split(".").pop();
+      const ext = file.name.split(".").pop().toLowerCase();
       cvPath = `${user.id}/${Date.now()}.${ext}`;
       await supabaseClient.storage.from("resumes").upload(cvPath, file, { upsert: true });
     }
 
+    const firstName = form.first_name.value.trim();
+    const lastName = form.last_name.value.trim();
+    const fullName = `${firstName} ${lastName}`.trim();
+
     const { error } = await supabaseClient.from("profiles").update({
-      full_name: form.full_name.value.trim(),
+      first_name: firstName,
+      last_name: lastName,
+      full_name: fullName,
       phone: form.phone.value.trim(),
+      gender: form.gender.value,
       skills: form.skills.value.trim(),
       experience: form.experience.value.trim(),
+      education: form.education.value.trim(),
       preferred_location: form.preferred_location.value.trim(),
       salary_expectations: form.salary_expectations.value.trim(),
       work_authorization: form.work_authorization.value.trim(),
@@ -397,11 +518,11 @@ async function loadProfilePage() {
     } else {
       showMessage(msg, "Profile updated successfully!");
       await refreshCurrentUser();
+      document.querySelector("[data-profile-name]").textContent = fullName || "My Dashboard";
     }
   };
 }
 
-// 4. Admin Panel (admin.html)
 async function initAdminPage() {
   const loadingGate = document.querySelector("[data-admin-loading]");
   const loginGate = document.querySelector("[data-admin-login]");
@@ -450,7 +571,6 @@ async function initAdminPage() {
     checkAdmin();
   }));
 
-  // Add / Edit Job
   const jobDialog = document.querySelector("[data-job-dialog]");
   const jobForm = document.querySelector("[data-job-form]");
   document.querySelector("[data-show-job-form]")?.addEventListener("click", () => {
@@ -475,12 +595,9 @@ async function initAdminPage() {
       is_featured: jobForm.is_featured.checked
     };
 
-    let res;
-    if (jobId) {
-      res = await supabaseClient.from("jobs").update(payload).eq("id", jobId);
-    } else {
-      res = await supabaseClient.from("jobs").insert(payload);
-    }
+    let res = jobId
+      ? await supabaseClient.from("jobs").update(payload).eq("id", jobId)
+      : await supabaseClient.from("jobs").insert(payload);
 
     if (res.error) showMessage(msg, res.error.message, true);
     else {
@@ -504,7 +621,6 @@ function setupAdminTabs() {
 }
 
 async function renderAdminDashboard() {
-  // Fetch All Jobs, Applications, Users
   const [jobsRes, appsRes, usersRes] = await Promise.all([
     supabaseClient.from("jobs").select("*").order("created_at", { ascending: false }),
     supabaseClient.from("applications").select("*, jobs(title)").order("created_at", { ascending: false }),
@@ -519,7 +635,6 @@ async function renderAdminDashboard() {
   document.querySelector("[data-application-count]").textContent = `(${apps.length})`;
   document.querySelector("[data-user-count]").textContent = `(${users.length})`;
 
-  // 1. Render Jobs
   const jobsList = document.querySelector("[data-admin-jobs]");
   jobsList.innerHTML = jobs.length ? jobs.map((j) => `
     <article class="admin-job">
@@ -534,7 +649,6 @@ async function renderAdminDashboard() {
     </article>
   `).join("") : '<p class="empty-admin">No jobs posted yet.</p>';
 
-  // 2. Render Applications
   const appsList = document.querySelector("[data-applications]");
   appsList.innerHTML = apps.length ? apps.map((a) => `
     <article class="application">
@@ -556,14 +670,13 @@ async function renderAdminDashboard() {
     </article>
   `).join("") : '<p class="empty-admin">No applications received yet.</p>';
 
-  // 3. Render Registered Users
   const usersList = document.querySelector("[data-admin-users]");
   usersList.innerHTML = users.length ? users.map((u) => `
     <article class="admin-job">
       <div>
-        <h3>${escapeHtml(u.full_name)} (${escapeHtml(u.role)}) ${u.is_blocked ? '<span style="color:red; font-size:11px; font-weight:700;">[BLOCKED]</span>' : ''}</h3>
-        <p>${escapeHtml(u.email)} | Phone: ${escapeHtml(u.phone || 'N/A')}</p>
-        <p style="font-size:11px; color:var(--muted);">Skills: ${escapeHtml(u.skills || 'None listed')}</p>
+        <h3>${escapeHtml(u.full_name || u.email)} (${escapeHtml(u.role)}) ${u.is_blocked ? '<span style="color:red; font-size:11px; font-weight:700;">[BLOCKED]</span>' : ''}</h3>
+        <p>${escapeHtml(u.email)} | Phone: ${escapeHtml(u.phone || 'N/A')} | Gender: ${escapeHtml(u.gender || 'N/A')}</p>
+        <p style="font-size:11px; color:var(--muted);">Skills: ${escapeHtml(u.skills || 'None listed')} | Location: ${escapeHtml(u.preferred_location || 'Not set')}</p>
       </div>
       <div style="display: flex; gap: 8px;">
         <button class="delete-job" style="color: var(--ink);" onclick="toggleUserBlock('${u.id}', ${u.is_blocked})">${u.is_blocked ? 'Unblock' : 'Block'}</button>
@@ -572,7 +685,6 @@ async function renderAdminDashboard() {
   `).join("") : '<p class="empty-admin">No registered users found.</p>';
 }
 
-// Global Helpers for Inline Handlers
 window.viewResume = async (path) => {
   const { data } = await supabaseClient.storage.from("resumes").createSignedUrl(path, 60);
   if (data?.signedUrl) window.open(data.signedUrl, "_blank");
@@ -600,9 +712,6 @@ window.toggleUserBlock = async (id, isBlocked) => {
   renderAdminDashboard();
 };
 
-// ----------------------------------------------------
-// BOOTSTRAPPER
-// ----------------------------------------------------
 document.addEventListener("DOMContentLoaded", async () => {
   document.querySelectorAll("[data-year]").forEach((y) => y.textContent = new Date().getFullYear());
   document.querySelectorAll("[data-close-dialog]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
