@@ -1,9 +1,12 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex" /><title>Admin Control Center | Northstar Talent</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Admin Control Center | Northstar Talent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
@@ -17,8 +20,13 @@
     </header>
 
     <main class="admin-main">
-      <section class="admin-gate" data-admin-loading><p class="eyebrow">Admin portal</p><h1>Verifying permissions…</h1></section>
+      <!-- Loading Gate -->
+      <section class="admin-gate" data-admin-loading>
+        <p class="eyebrow">Admin portal</p>
+        <h1>Verifying permissions…</h1>
+      </section>
       
+      <!-- Login Gate -->
       <section class="admin-gate" data-admin-login hidden>
         <p class="eyebrow">Admin portal</p>
         <h1>Sign in to manage agency</h1>
@@ -31,6 +39,7 @@
         </form>
       </section>
       
+      <!-- Denied Gate -->
       <section class="admin-gate" data-admin-denied hidden>
         <p class="eyebrow">Admin portal</p>
         <h1>Access Denied</h1>
@@ -48,7 +57,6 @@
           <div class="admin-actions">
             <button class="btn-ctrl" data-admin-sign-out>Sign out</button>
             <button class="btn-ctrl btn-ctrl-primary" data-show-job-form>+ Add New Job</button>
-            <button class="btn-ctrl" data-show-user-form style="border-color: var(--peach); color: var(--peach);">+ Add Candidate</button>
           </div>
         </div>
 
@@ -74,11 +82,10 @@
             </div>
           </div>
 
-          <!-- 3. Registered Candidates & Users (Excludes Admins) -->
+          <!-- 3. Registered Candidates (Excludes Admins) -->
           <div class="admin-card vertical-section">
             <div class="section-card-header">
               <h2>3. Registered Candidates & Users <span data-user-count></span></h2>
-              <button class="btn-ctrl" style="font-size: 11px; padding: 5px 12px;" data-show-user-form>+ Create Candidate Profile</button>
             </div>
             <div class="admin-job-list" data-admin-users>
               <p class="empty-admin">Loading users...</p>
@@ -135,7 +142,7 @@
             </label>
           </div>
 
-          <label>Custom Redirection URL <span class="small-label">Optional — Will redirect here after candidate applies</span>
+          <label>Custom Redirection URL <span class="small-label">Optional — Redirect target after applying</span>
             <input name="redirect_url" type="url" placeholder="e.g. https://company-careers-portal.com/job/102" />
           </label>
 
@@ -151,11 +158,11 @@
         </form>
       </dialog>
 
-      <!-- Modal 2: Create / Edit User Profile -->
+      <!-- Modal 2: Edit User Profile (Admin Moderation) -->
       <dialog class="job-dialog" data-user-dialog>
         <form class="job-form" data-user-form>
           <div class="dialog-heading">
-            <h2 data-user-modal-title>Candidate Profile</h2>
+            <h2 data-user-modal-title>Edit Candidate Profile</h2>
             <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
           </div>
           <input type="hidden" name="user_id" />
@@ -166,7 +173,7 @@
           </div>
 
           <div class="form-two">
-            <label>Email<input required type="email" name="email" placeholder="e.g. candidate@example.com" /></label>
+            <label>Email<input required type="email" name="email" readonly style="background: var(--cream);" /></label>
             <label>Mobile No<input required name="phone" placeholder="e.g. +91 9876543210" /></label>
           </div>
 
@@ -198,7 +205,7 @@
           <label>Experience Summary<textarea name="experience" rows="3" placeholder="Brief background summary..."></textarea></label>
 
           <div class="button-row">
-            <button class="button button-primary" type="submit" data-user-submit-btn>Save Candidate <span>→</span></button>
+            <button class="button button-primary" type="submit" data-user-submit-btn>Update Candidate <span>→</span></button>
             <button class="button button-text" type="button" data-close-dialog>Cancel</button>
           </div>
           <p class="form-message" role="status"></p>
