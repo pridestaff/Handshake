@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>All Jobs | Northstar Talent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="supabase-config.js" defer></script>
+    <script src="script.js" defer></script>
+  </head>
+  <body data-page="jobs">
+    <header class="site-header">
+      <a class="brand" href="index.html"><span class="brand-mark">N</span>Northstar <em>Talent</em></a>
+      <button class="menu-button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="jobs.html" style="opacity: 1; border-color: var(--peach);">Browse Jobs</a>
+        <a href="profile.html" class="nav-profile-link" hidden>My Dashboard</a>
+        <a href="index.html#about">About</a>
+        <a href="index.html#contact">Contact</a>
+        <button class="nav-sign-in" type="button" data-open-auth>Sign in</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="page-banner">
+        <div class="section-wrap">
+          <p class="eyebrow">Job Board</p>
+          <h1>Discover active roles</h1>
+          <p class="hero-text">Filter through all open opportunities and find the position that fits your career goals.</p>
+          
+          <!-- Search and Multi-Filters -->
+          <div class="filters-bar">
+            <div class="filter-field search-grow">
+              <label>Search</label>
+              <input type="search" data-filter-search placeholder="Job title, keywords, or location" />
+            </div>
+            <div class="filter-field">
+              <label>Department</label>
+              <select data-filter-department>
+                <option value="">All Departments</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label>Employment Type</label>
+              <select data-filter-type>
+                <option value="">All Types</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label>Location</label>
+              <select data-filter-location>
+                <option value="">All Locations</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-wrap" style="padding-top: 50px; padding-bottom: 90px;">
+        <div class="job-list dark-cards" data-all-jobs>
+          <p class="empty-state">Loading vacancies...</p>
+        </div>
+        <p class="empty-state" data-no-jobs-msg hidden>No positions match your selected filters. Try broadening your search.</p>
+      </section>
+    </main>
+
+    <!-- Dialogs -->
+    <dialog class="apply-dialog" data-apply-dialog>
+      <form class="apply-form" data-apply-form>
+        <div class="dialog-heading">
+          <div><p class="eyebrow">Apply now</p><h2 data-application-title>Apply for this role</h2></div>
+          <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
+        </div>
+        <input type="hidden" name="jobId" />
+        <label>Full name<input required name="name" autocomplete="name" /></label>
+        <label>Email<input required name="email" type="email" autocomplete="email" readonly /></label>
+        <label>Phone<input required name="phone" autocomplete="tel" /></label>
+        <label>Résumé <span class="small-label">PDF or DOC, up to 5 MB</span><input required type="file" name="resume" accept=".pdf,.doc,.docx" /></label>
+        <label>Cover note <span class="small-label">Optional</span><textarea name="message" rows="3" placeholder="Tell us why this role interests you."></textarea></label>
+        <button class="button button-primary" type="submit">Submit application <span>→</span></button>
+        <p class="form-message" role="status"></p>
+      </form>
+    </dialog>
+
+    <dialog class="auth-dialog" data-auth-dialog>
+      <form class="auth-form" data-auth-form>
+        <div class="dialog-heading">
+          <div><p class="eyebrow">Candidate portal</p><h2 data-auth-heading>Sign in to apply</h2></div>
+          <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
+        </div>
+        <label>Email<input required type="email" name="email" autocomplete="email" /></label>
+        <label>Password<input required type="password" name="password" autocomplete="current-password" minlength="6" /></label>
+        <button class="button button-primary" type="submit" data-auth-submit>Sign in <span>→</span></button>
+        <p class="form-message" role="status"></p>
+        <button type="button" class="auth-toggle" data-auth-toggle>New here? Create an account</button>
+      </form>
+    </dialog>
+
+    <footer class="site-footer">
+      <a class="brand" href="index.html"><span class="brand-mark">N</span>Northstar <em>Talent</em></a>
+      <p>Thoughtful recruitment for people and teams.</p>
+      <div><span>© <span data-year></span> Northstar Talent</span></div>
+    </footer>
+  </body>
+</html>
