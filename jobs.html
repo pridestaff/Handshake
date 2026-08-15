@@ -33,17 +33,14 @@
           <h1>Discover active roles</h1>
           <p class="hero-text">Filter through all open opportunities and find the position that fits your career goals.</p>
           
-          <!-- Search and Multi-Filters -->
           <div class="filters-bar">
-            <div class="filter-field search-grow">
+            <div class="filter-field">
               <label>Search</label>
-              <input type="search" data-filter-search placeholder="Job title, keywords, or location" />
+              <input type="search" data-filter-search placeholder="Search title, skills or location" />
             </div>
             <div class="filter-field">
               <label>Department</label>
-              <select data-filter-department>
-                <option value="">All Departments</option>
-              </select>
+              <select data-filter-department><option value="">All Departments</option></select>
             </div>
             <div class="filter-field">
               <label>Employment Type</label>
@@ -56,9 +53,19 @@
             </div>
             <div class="filter-field">
               <label>Location</label>
-              <select data-filter-location>
-                <option value="">All Locations</option>
-              </select>
+              <select data-filter-location><option value="">All Locations</option></select>
+            </div>
+          </div>
+
+          <div style="margin-top: 25px;">
+            <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 8px;">Popular Skill Tags</p>
+            <div class="tag-cloud" data-job-filter-chips>
+              <span class="tag-chip" data-tag="Design">Design</span>
+              <span class="tag-chip" data-tag="Engineering">Engineering</span>
+              <span class="tag-chip" data-tag="Product">Product</span>
+              <span class="tag-chip" data-tag="Remote">Remote</span>
+              <span class="tag-chip" data-tag="Full-time">Full-time</span>
+              <span class="tag-chip" data-tag="Hybrid">Hybrid</span>
             </div>
           </div>
         </div>
@@ -68,7 +75,7 @@
         <div class="job-list dark-cards" data-all-jobs>
           <p class="empty-state">Loading vacancies...</p>
         </div>
-        <p class="empty-state" data-no-jobs-msg hidden>No positions match your selected filters. Try broadening your search.</p>
+        <p class="empty-state" data-no-jobs-msg hidden>No positions match your selected filters. Try clearing some tags or search terms.</p>
       </section>
     </main>
 
@@ -95,6 +102,25 @@
         <div class="dialog-heading">
           <div><p class="eyebrow">Candidate portal</p><h2 data-auth-heading>Sign in to apply</h2></div>
           <button aria-label="Close" type="button" class="close-button" data-close-dialog>×</button>
+        </div>
+        <div data-signup-fields hidden>
+          <div class="form-two">
+            <label>First Name<input name="first_name" placeholder="e.g. Maya" autocomplete="given-name" /></label>
+            <label>Last Name<input name="last_name" placeholder="e.g. Rao" autocomplete="family-name" /></label>
+          </div>
+          <div class="form-two" style="margin-top: 10px;">
+            <label>Mobile No<input name="phone" type="tel" placeholder="e.g. +91 9876543210" autocomplete="tel" /></label>
+            <label>Gender
+              <select name="gender">
+                <option value="">Select gender</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+                <option value="Non-binary">Non-binary</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </label>
+          </div>
         </div>
         <label>Email<input required type="email" name="email" autocomplete="email" /></label>
         <label>Password<input required type="password" name="password" autocomplete="current-password" minlength="6" /></label>
