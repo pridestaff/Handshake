@@ -165,12 +165,12 @@ blockquote { margin: 12px auto 22px; max-width: 760px; font-family: var(--serif)
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: var(--cream);
   border-left: 3px solid var(--peach);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink);
-  font-weight: 500;
+  font-weight: 600;
   margin-top: -6px;
   margin-bottom: 4px;
 }
@@ -183,7 +183,6 @@ blockquote { margin: 12px auto 22px; max-width: 760px; font-family: var(--serif)
 .admin-intro h1, .admin-gate h1 { font-size: 44px; margin: 0; }
 .admin-actions { display: flex; align-items: center; gap: 14px; }
 
-/* Vertical Stack Container for Admin */
 .admin-vertical-container {
   display: flex;
   flex-direction: column;
@@ -233,7 +232,7 @@ blockquote { margin: 12px auto 22px; max-width: 760px; font-family: var(--serif)
 .form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .form-message.is-error { color: #a54836; }
 
-/* Polished Core-Matched Action Buttons */
+/* Custom Admin Action Buttons matching Brand */
 .admin-item-actions {
   display: flex;
   align-items: center;
@@ -245,7 +244,7 @@ blockquote { margin: 12px auto 22px; max-width: 760px; font-family: var(--serif)
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 14px;
+  padding: 8px 14px;
   font-size: 12px;
   font-weight: 700;
   font-family: var(--sans);
@@ -254,7 +253,7 @@ blockquote { margin: 12px auto 22px; max-width: 760px; font-family: var(--serif)
   color: var(--ink);
   cursor: pointer;
   transition: all 0.2s ease;
-  border-radius: 1px;
+  border-radius: 2px;
 }
 
 .btn-ctrl:hover {
