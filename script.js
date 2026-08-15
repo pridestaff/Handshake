@@ -201,7 +201,6 @@ function openApplicationModal(jobId, jobTitle = null, redirectUrl = null) {
   pendingJobTitle = jobTitle;
   pendingRedirectUrl = redirectUrl;
 
-  // If already applied, prevent opening and inform candidate
   if (currentUser && userAppliedJobIds.has(String(jobId))) {
     alert("You have already submitted an application for this position.");
     return;
@@ -350,7 +349,6 @@ function setupApplicationModal() {
       userAppliedJobIds.add(String(appliedJobId));
       await refreshCurrentUser();
 
-      // Proactively update single job page button state to Already Applied
       document.querySelectorAll("[data-apply-single-btn]").forEach(btn => {
         btn.disabled = true;
         btn.innerHTML = "Already Applied ✓";
@@ -614,7 +612,6 @@ async function initSingleJobPage() {
   if (loadingMsg) loadingMsg.hidden = true;
   if (fullDetails) fullDetails.hidden = false;
 
-  // Check if current user already applied for this specific job
   const hasApplied = userAppliedJobIds.has(String(job.id));
 
   const handleApplyAction = () => {
@@ -655,9 +652,6 @@ async function initSingleJobPage() {
 // ----------------------------------------------------
 // PAGE: CANDIDATE PROFILE (profile.html)
 // ----------------------------------------------------
-// ----------------------------------------------------
-// PAGE: CANDIDATE PROFILE (profile.html)
-// ----------------------------------------------------
 async function loadProfilePage() {
   const user = await refreshCurrentUser();
   if (!user) {
@@ -675,7 +669,6 @@ async function loadProfilePage() {
   const incompleteBanner = document.getElementById("profile-incomplete-banner");
   const form = document.querySelector("[data-profile-form]");
 
-  // Determine if candidate has completed basic details
   const isProfileComplete = Boolean(
     currentProfile?.phone && (currentProfile?.skills || currentProfile?.experience || currentProfile?.preferred_location)
   );
@@ -690,13 +683,11 @@ async function loadProfilePage() {
     if (viewModeEl) viewModeEl.hidden = false;
   };
 
-  // Bind Switch Buttons
   document.getElementById("btn-edit-profile")?.addEventListener("click", switchToEdit);
   document.getElementById("btn-complete-profile")?.addEventListener("click", switchToEdit);
   document.getElementById("btn-cancel-edit")?.addEventListener("click", switchToView);
   document.getElementById("btn-cancel-form")?.addEventListener("click", switchToView);
 
-  // Set Initial Visibility
   if (isProfileComplete) {
     switchToView();
     if (incompleteBanner) incompleteBanner.hidden = true;
@@ -705,7 +696,6 @@ async function loadProfilePage() {
     if (incompleteBanner) incompleteBanner.hidden = false;
   }
 
-  // Populate Read-Only View Elements
   const setTxt = (sel, val, fallback = "—") => {
     const el = document.querySelector(sel);
     if (el) el.textContent = val && val.trim() !== "" ? val : fallback;
@@ -720,7 +710,6 @@ async function loadProfilePage() {
   setTxt("[data-view-education]", currentProfile?.education);
   setTxt("[data-view-experience]", currentProfile?.experience);
 
-  // Render Skill Badges in View Mode
   const skillsContainer = document.querySelector("[data-view-skills]");
   if (skillsContainer) {
     if (currentProfile?.skills && currentProfile.skills.trim() !== "") {
@@ -731,7 +720,6 @@ async function loadProfilePage() {
     }
   }
 
-  // Render CV Link in View Mode
   const viewCvContainer = document.getElementById("view-current-cv");
   if (viewCvContainer) {
     if (currentProfile?.resume_path) {
@@ -743,7 +731,6 @@ async function loadProfilePage() {
     }
   }
 
-  // Populate Edit Form Inputs
   if (form && currentProfile) {
     form.first_name.value = currentProfile.first_name || "";
     form.last_name.value = currentProfile.last_name || "";
@@ -767,7 +754,6 @@ async function loadProfilePage() {
     }
   }
 
-  // Load Candidate Applications
   const appsContainer = document.querySelector("[data-candidate-applications]");
   const { data: apps } = await supabaseClient
     .from("applications")
@@ -791,7 +777,6 @@ async function loadProfilePage() {
     `).join("") : '<p class="empty-admin">You have not applied for any roles yet.</p>';
   }
 
-  // Load Saved Roles
   const savedContainer = document.querySelector("[data-candidate-saved]");
   const { data: saved } = await supabaseClient
     .from("saved_jobs")
@@ -813,7 +798,6 @@ async function loadProfilePage() {
     `).join("") : '<p class="empty-admin">You have no saved roles.</p>';
   }
 
-  // Save Profile Handler
   if (form) {
     form.onsubmit = async (e) => {
       e.preventDefault();
@@ -860,6 +844,7 @@ async function loadProfilePage() {
     };
   }
 }
+
 // ----------------------------------------------------
 // PAGE: ADMIN CONTROL CENTER (admin.html)
 // ----------------------------------------------------
@@ -1014,7 +999,6 @@ async function renderAdminDashboard() {
   const inquiryCountEl = document.querySelector("[data-inquiry-count]");
   if (inquiryCountEl) inquiryCountEl.textContent = `(${inquiries.length})`;
 
-  // 1. Render Jobs
   const jobsList = document.querySelector("[data-admin-jobs]");
   if (jobsList) {
     jobsList.innerHTML = allJobsCache.length ? allJobsCache.map((j) => `
@@ -1034,7 +1018,6 @@ async function renderAdminDashboard() {
     `).join("") : '<p class="empty-admin">No jobs posted yet.</p>';
   }
 
-  // 2. Render Applications
   const appsList = document.querySelector("[data-applications]");
   if (appsList) {
     appsList.innerHTML = allAppsCache.length ? allAppsCache.map((a) => `
@@ -1063,7 +1046,6 @@ async function renderAdminDashboard() {
     `).join("") : '<p class="empty-admin">No applications received yet.</p>';
   }
 
-  // 3. Render Users (Candidates Only)
   const usersList = document.querySelector("[data-admin-users]");
   if (usersList) {
     usersList.innerHTML = allUsersCache.length ? allUsersCache.map((u) => `
@@ -1082,7 +1064,6 @@ async function renderAdminDashboard() {
     `).join("") : '<p class="empty-admin">No registered candidate users found.</p>';
   }
 
-  // 4. Render Contact Inquiries
   const inquiriesList = document.querySelector("[data-admin-inquiries]");
   if (inquiriesList) {
     inquiriesList.innerHTML = inquiries.length ? inquiries.map((m) => `
