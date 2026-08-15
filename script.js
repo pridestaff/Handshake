@@ -289,10 +289,11 @@ async function toggleSaveJob(jobId, btn) {
 }
 
 // ----------------------------------------------------
-// CONTACT FORM SUBMISSION (LIVE SUPABASE INTEGRATION)
+// CONTACT FORM SUBMISSION WITH POPUP MODAL
 // ----------------------------------------------------
 function setupContactForm() {
   const form = document.querySelector("[data-contact-form]");
+  const successModal = document.querySelector("[data-contact-success-dialog]");
   if (!form) return;
 
   form.addEventListener("submit", async (e) => {
@@ -301,7 +302,7 @@ function setupContactForm() {
     const submitBtn = form.querySelector('[type="submit"]');
 
     submitBtn.disabled = true;
-    showMessage(msg, "Sending your message...");
+    showMessage(msg, "Submitting your enquiry...");
 
     const payload = {
       name: form.elements.name.value.trim(),
@@ -314,10 +315,15 @@ function setupContactForm() {
     submitBtn.disabled = false;
 
     if (error) {
-      showMessage(msg, "Failed to send: " + error.message, true);
+      showMessage(msg, "Failed to submit: " + error.message, true);
     } else {
       form.reset();
-      showMessage(msg, "Thank you! Your message has been sent successfully.");
+      showMessage(msg, "");
+      if (successModal) {
+        successModal.showModal();
+      } else {
+        alert("Your enquiry has been submitted successfully! We will get back to you on email shortly.");
+      }
     }
   });
 }
@@ -674,72 +680,82 @@ async function renderAdminDashboard() {
   document.querySelector("[data-job-count]").textContent = `(${jobs.length})`;
   document.querySelector("[data-application-count]").textContent = `(${apps.length})`;
   document.querySelector("[data-user-count]").textContent = `(${users.length})`;
-  document.querySelector("[data-inquiry-count]").textContent = `(${inquiries.length})`;
+  
+  const inquiryCountEl = document.querySelector("[data-inquiry-count]");
+  if (inquiryCountEl) inquiryCountEl.textContent = `(${inquiries.length})`;
 
   // 1. Jobs List
   const jobsList = document.querySelector("[data-admin-jobs]");
-  jobsList.innerHTML = jobs.length ? jobs.map((j) => `
-    <article class="admin-job">
-      <div>
-        <h3>${escapeHtml(j.title)} ${j.is_open ? '' : '<span class="closed-label">(Closed)</span>'} ${j.is_featured ? '<span class="featured-badge">Featured</span>' : ''}</h3>
-        <p>${escapeHtml(j.department)} · ${escapeHtml(j.location)} · ${escapeHtml(j.employment_type)}</p>
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button class="delete-job" style="color: var(--ink);" onclick="toggleJobStatus('${j.id}', ${j.is_open})">${j.is_open ? 'Close' : 'Open'}</button>
-        <button class="delete-job" onclick="deleteJob('${j.id}')">Delete</button>
-      </div>
-    </article>
-  `).join("") : '<p class="empty-admin">No jobs posted yet.</p>';
+  if (jobsList) {
+    jobsList.innerHTML = jobs.length ? jobs.map((j) => `
+      <article class="admin-job">
+        <div>
+          <h3>${escapeHtml(j.title)} ${j.is_open ? '' : '<span class="closed-label">(Closed)</span>'} ${j.is_featured ? '<span class="featured-badge">Featured</span>' : ''}</h3>
+          <p>${escapeHtml(j.department)} · ${escapeHtml(j.location)} · ${escapeHtml(j.employment_type)}</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="delete-job" style="color: var(--ink);" onclick="toggleJobStatus('${j.id}', ${j.is_open})">${j.is_open ? 'Close' : 'Open'}</button>
+          <button class="delete-job" onclick="deleteJob('${j.id}')">Delete</button>
+        </div>
+      </article>
+    `).join("") : '<p class="empty-admin">No jobs posted yet.</p>';
+  }
 
   // 2. Applications List
   const appsList = document.querySelector("[data-applications]");
-  appsList.innerHTML = apps.length ? apps.map((a) => `
-    <article class="application">
-      <h3>${escapeHtml(a.full_name)} — <span style="font-weight: 400; color: var(--muted);">${escapeHtml(a.jobs?.title || "Role")}</span></h3>
-      <p>Email: ${escapeHtml(a.email)} | Phone: ${escapeHtml(a.phone)}</p>
-      ${a.message ? `<p style="margin-top:4px; font-style:italic;">"${escapeHtml(a.message)}"</p>` : ''}
-      <div class="application-actions">
-        <button type="button" onclick="viewResume('${a.resume_path}')">Download CV</button>
-        <label>Status:
-          <select onchange="updateApplicationStatus('${a.id}', this.value)">
-            <option value="received" ${a.status === 'received' ? 'selected' : ''}>Received</option>
-            <option value="shortlisted" ${a.status === 'shortlisted' ? 'selected' : ''}>Shortlisted</option>
-            <option value="interview" ${a.status === 'interview' ? 'selected' : ''}>Interview</option>
-            <option value="hired" ${a.status === 'hired' ? 'selected' : ''}>Hired</option>
-            <option value="rejected" ${a.status === 'rejected' ? 'selected' : ''}>Rejected</option>
-          </select>
-        </label>
-      </div>
-    </article>
-  `).join("") : '<p class="empty-admin">No applications received yet.</p>';
+  if (appsList) {
+    appsList.innerHTML = apps.length ? apps.map((a) => `
+      <article class="application">
+        <h3>${escapeHtml(a.full_name)} — <span style="font-weight: 400; color: var(--muted);">${escapeHtml(a.jobs?.title || "Role")}</span></h3>
+        <p>Email: ${escapeHtml(a.email)} | Phone: ${escapeHtml(a.phone)}</p>
+        ${a.message ? `<p style="margin-top:4px; font-style:italic;">"${escapeHtml(a.message)}"</p>` : ''}
+        <div class="application-actions">
+          <button type="button" onclick="viewResume('${a.resume_path}')">Download CV</button>
+          <label>Status:
+            <select onchange="updateApplicationStatus('${a.id}', this.value)">
+              <option value="received" ${a.status === 'received' ? 'selected' : ''}>Received</option>
+              <option value="shortlisted" ${a.status === 'shortlisted' ? 'selected' : ''}>Shortlisted</option>
+              <option value="interview" ${a.status === 'interview' ? 'selected' : ''}>Interview</option>
+              <option value="hired" ${a.status === 'hired' ? 'selected' : ''}>Hired</option>
+              <option value="rejected" ${a.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+            </select>
+          </label>
+        </div>
+      </article>
+    `).join("") : '<p class="empty-admin">No applications received yet.</p>';
+  }
 
   // 3. Registered Users List
   const usersList = document.querySelector("[data-admin-users]");
-  usersList.innerHTML = users.length ? users.map((u) => `
-    <article class="admin-job">
-      <div>
-        <h3>${escapeHtml(u.full_name || u.email)} (${escapeHtml(u.role)}) ${u.is_blocked ? '<span style="color:red; font-size:11px; font-weight:700;">[BLOCKED]</span>' : ''}</h3>
-        <p>${escapeHtml(u.email)} | Phone: ${escapeHtml(u.phone || 'N/A')} | Gender: ${escapeHtml(u.gender || 'N/A')}</p>
-        <p style="font-size:11px; color:var(--muted);">Skills: ${escapeHtml(u.skills || 'None listed')} | Location: ${escapeHtml(u.preferred_location || 'Not set')}</p>
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button class="delete-job" style="color: var(--ink);" onclick="toggleUserBlock('${u.id}', ${u.is_blocked})">${u.is_blocked ? 'Unblock' : 'Block'}</button>
-      </div>
-    </article>
-  `).join("") : '<p class="empty-admin">No registered users found.</p>';
+  if (usersList) {
+    usersList.innerHTML = users.length ? users.map((u) => `
+      <article class="admin-job">
+        <div>
+          <h3>${escapeHtml(u.full_name || u.email)} (${escapeHtml(u.role)}) ${u.is_blocked ? '<span style="color:red; font-size:11px; font-weight:700;">[BLOCKED]</span>' : ''}</h3>
+          <p>${escapeHtml(u.email)} | Phone: ${escapeHtml(u.phone || 'N/A')} | Gender: ${escapeHtml(u.gender || 'N/A')}</p>
+          <p style="font-size:11px; color:var(--muted);">Skills: ${escapeHtml(u.skills || 'None listed')} | Location: ${escapeHtml(u.preferred_location || 'Not set')}</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="delete-job" style="color: var(--ink);" onclick="toggleUserBlock('${u.id}', ${u.is_blocked})">${u.is_blocked ? 'Unblock' : 'Block'}</button>
+        </div>
+      </article>
+    `).join("") : '<p class="empty-admin">No registered users found.</p>';
+  }
 
   // 4. Contact Inquiries List
   const inquiriesList = document.querySelector("[data-admin-inquiries]");
-  inquiriesList.innerHTML = inquiries.length ? inquiries.map((m) => `
-    <article class="application">
-      <h3>${escapeHtml(m.name)} — <span style="font-weight: 400; color: var(--peach);">${escapeHtml(m.interest)}</span></h3>
-      <p>Email: <a href="mailto:${escapeHtml(m.email)}" style="font-weight:600; color:var(--ink);">${escapeHtml(m.email)}</a> · ${new Date(m.created_at).toLocaleDateString()}</p>
-      <p style="margin-top:6px; color:var(--ink); font-size:13px; background:var(--cream); padding:10px; border-left:3px solid var(--peach);">${escapeHtml(m.message)}</p>
-      <div class="application-actions" style="justify-content: flex-end;">
-        <button class="delete-job" onclick="deleteInquiry('${m.id}')">Delete Message</button>
-      </div>
-    </article>
-  `).join("") : '<p class="empty-admin">No contact messages received yet.</p>';
+  if (inquiriesList) {
+    inquiriesList.innerHTML = inquiries.length ? inquiries.map((m) => `
+      <article class="application">
+        <h3>${escapeHtml(m.name)} — <span style="font-weight: 400; color: var(--peach);">${escapeHtml(m.interest)}</span></h3>
+        <p>Email: <a href="mailto:${escapeHtml(m.email)}" style="font-weight:600; color:var(--ink);">${escapeHtml(m.email)}</a> · ${new Date(m.created_at).toLocaleDateString()}</p>
+        <p style="margin-top:6px; color:var(--ink); font-size:13px; background:var(--cream); padding:10px; border-left:3px solid var(--peach);">${escapeHtml(m.message)}</p>
+        <div class="application-actions" style="justify-content: flex-end;">
+          <button class="delete-job" onclick="deleteInquiry('${m.id}')">Delete Message</button>
+        </div>
+      </article>
+    `).join("") : '<p class="empty-admin">No contact messages received yet.</p>';
+  }
 }
 
 window.viewResume = async (path) => {
