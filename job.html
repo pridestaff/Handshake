@@ -89,8 +89,8 @@
             <h2 style="margin-top: 45px;">Candidate Requirements & Qualifications</h2>
             <div data-job-requirements style="white-space: pre-line; line-height: 1.75; font-size: 16px; color: var(--ink);"></div>
 
-            <!-- Bottom Action Banner with Apply Job Button -->
-            <div style="margin-top: 55px; padding: 32px; background: var(--cream); border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: gap; gap: 20px;">
+            <!-- Clean Bottom Action Banner -->
+            <div style="margin-top: 55px; padding: 32px; background: var(--cream); border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
               <div>
                 <h3 style="margin: 0 0 6px; font-family: var(--serif); font-size: 22px;">Ready to take the next step?</h3>
                 <p style="margin: 0; color: var(--muted); font-size: 14px;">Apply directly to get connected with the hiring team.</p>
@@ -102,7 +102,7 @@
           </div>
         </div>
 
-        <!-- Right Column: Sidebar Action Box -->
+        <!-- Right Column: Sticky Sidebar Card -->
         <aside class="job-sidebar">
           <div class="job-sidebar-card">
             <h3 style="font-family: var(--serif); font-size: 22px; margin-bottom: 10px;">Ready to apply?</h3>
@@ -134,7 +134,12 @@
         <label>Full name<input required name="name" autocomplete="name" /></label>
         <label>Email<input required name="email" type="email" autocomplete="email" readonly /></label>
         <label>Phone<input required name="phone" autocomplete="tel" /></label>
-        <label>Résumé <span class="small-label">PDF or DOC, up to 5 MB</span><input required type="file" name="resume" accept=".pdf,.doc,.docx" /></label>
+        
+        <label>Résumé / CV <span class="small-label">PDF or DOC, up to 5 MB</span>
+          <input name="resume" type="file" accept=".pdf,.doc,.docx" />
+        </label>
+        <div id="modal-cv-indicator" hidden></div>
+
         <label>Cover note <span class="small-label">Optional</span><textarea name="message" rows="3" placeholder="Tell us why this role interests you."></textarea></label>
         <button class="button button-primary" type="submit">Submit application <span>→</span></button>
         <p class="form-message" role="status"></p>
