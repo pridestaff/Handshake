@@ -6,6 +6,7 @@ let allJobsCache = [];
 let allUsersCache = [];
 let allAppsCache = [];
 let pendingJobId = null;
+let pendingJobTitle = null;
 let pendingRedirectUrl = null;
 
 function escapeHtml(value) {
@@ -94,7 +95,7 @@ function setupAuthModal() {
   const signupFields = form.querySelector("[data-signup-fields]");
 
   const setMode = () => {
-    heading.textContent = isSignUp ? "Create your account" : "Sign in to your account";
+    heading.textContent = isSignUp ? "Create your account" : "Sign in to apply";
     submit.innerHTML = `${isSignUp ? "Create account" : "Sign in"} <span>→</span>`;
     toggle.textContent = isSignUp ? "Already have an account? Sign in" : "New here? Create an account";
     
@@ -170,8 +171,9 @@ function setupAuthModal() {
       form.reset();
       form.closest("dialog").close();
       
+      // Auto open the pre-filled apply modal after signing in/up
       if (pendingJobId) {
-        openApplicationModal(pendingJobId, null, pendingRedirectUrl);
+        openApplicationModal(pendingJobId, pendingJobTitle, pendingRedirectUrl);
       }
       if (window.location.pathname.includes("profile.html")) loadProfilePage();
     } catch (err) {
@@ -201,11 +203,11 @@ function setupApplicationModal() {
       return;
     }
 
-    const file = form.elements.resume.files[0];
+    const file = form.elements.resume?.files?.[0];
     let resumePath = currentProfile?.resume_path;
 
     if (!file && !resumePath) {
-      showMessage(msg, "Please upload your résumé file.", true);
+      showMessage(msg, "Please upload your résumé file to complete your application.", true);
       return;
     }
 
@@ -243,9 +245,9 @@ function setupApplicationModal() {
 
       if (appErr && appErr.code !== "23505") throw appErr;
 
-      // Handle Redirection Workflow
+      // Handle Redirection Workflow if present
       if (pendingRedirectUrl && pendingRedirectUrl.trim() !== "") {
-        showMessage(msg, "Application submitted! Redirecting you to the application portal...");
+        showMessage(msg, "Application submitted! Redirecting to the application portal...");
         setTimeout(() => {
           window.location.href = pendingRedirectUrl;
         }, 1200);
@@ -263,10 +265,12 @@ function setupApplicationModal() {
 
 function openApplicationModal(jobId, jobTitle = null, redirectUrl = null) {
   pendingJobId = jobId;
+  pendingJobTitle = jobTitle;
   pendingRedirectUrl = redirectUrl;
 
+  // If user is not logged in / registered, open Auth modal first
   if (!currentUser) {
-    openAuthDialog("Sign in to apply");
+    openAuthDialog("Sign in or Register to Apply");
     return;
   }
 
@@ -277,11 +281,27 @@ function openApplicationModal(jobId, jobTitle = null, redirectUrl = null) {
   dialog.querySelector('[name="jobId"]').value = jobId;
   dialog.querySelector('[name="email"]').value = currentUser.email || "";
   
+  // Pre-fill registered candidate details
+  const nameInput = dialog.querySelector('[name="name"]');
+  const phoneInput = dialog.querySelector('[name="phone"]');
+  const resumeInput = dialog.querySelector('[name="resume"]');
+  const cvIndicator = document.getElementById("modal-cv-indicator");
+
   if (currentProfile) {
-    dialog.querySelector('[name="name"]').value = currentProfile.full_name || `${currentProfile.first_name || ''} ${currentProfile.last_name || ''}`.trim();
-    dialog.querySelector('[name="phone"]').value = currentProfile.phone || "";
+    nameInput.value = currentProfile.full_name || `${currentProfile.first_name || ''} ${currentProfile.last_name || ''}`.trim();
+    phoneInput.value = currentProfile.phone || "";
+
+    if (currentProfile.resume_path && cvIndicator) {
+      cvIndicator.hidden = false;
+      cvIndicator.className = "cv-present-badge";
+      cvIndicator.innerHTML = `✓ Active CV on file. (Upload new file only to replace)`;
+      if (resumeInput) resumeInput.required = false;
+    } else {
+      if (cvIndicator) cvIndicator.hidden = true;
+      if (resumeInput) resumeInput.required = true;
+    }
   }
-  
+
   showMessage(dialog.querySelector(".form-message"), "");
   dialog.showModal();
 }
@@ -512,25 +532,10 @@ async function initSingleJobPage() {
   if (loadingMsg) loadingMsg.hidden = true;
   if (fullDetails) fullDetails.hidden = false;
 
-  // Apply Job Action Trigger (Redirection Logic)
-  const handleApplyAction = async () => {
+  // Apply Job Action Trigger (Opens Modal Every Time)
+  const handleApplyAction = () => {
     if (!job.is_open) return;
-
-    await refreshCurrentUser();
-
-    const redirectTarget = job.redirect_url ? job.redirect_url.trim() : null;
-
-    if (currentUser) {
-      // If user is already registered / logged in:
-      if (redirectTarget && redirectTarget !== "") {
-        window.location.href = redirectTarget;
-      } else {
-        openApplicationModal(job.id, job.title, null);
-      }
-    } else {
-      // If user is not registered / logged in:
-      openApplicationModal(job.id, job.title, redirectTarget);
-    }
+    openApplicationModal(job.id, job.title, job.redirect_url);
   };
 
   document.querySelectorAll("[data-apply-single-btn]").forEach(btn => {
@@ -844,7 +849,7 @@ async function renderAdminDashboard() {
   const inquiryCountEl = document.querySelector("[data-inquiry-count]");
   if (inquiryCountEl) inquiryCountEl.textContent = `(${inquiries.length})`;
 
-  // 1. Render Jobs with View/Edit/Delete
+  // 1. Render Jobs with core-matched buttons
   const jobsList = document.querySelector("[data-admin-jobs]");
   if (jobsList) {
     jobsList.innerHTML = allJobsCache.length ? allJobsCache.map((j) => `
@@ -856,7 +861,7 @@ async function renderAdminDashboard() {
         </div>
         <div class="admin-item-actions">
           <a class="btn-ctrl" href="job.html?id=${j.id}" target="_blank">View Live ↗</a>
-          <button class="btn-ctrl" onclick="editJob('${j.id}')">Edit</button>
+          <button class="btn-ctrl btn-ctrl-primary" onclick="editJob('${j.id}')">Edit</button>
           <button class="btn-ctrl" onclick="toggleJobStatus('${j.id}', ${j.is_open})">${j.is_open ? 'Close' : 'Reopen'}</button>
           <button class="btn-ctrl btn-ctrl-delete" onclick="deleteJob('${j.id}')">Delete</button>
         </div>
@@ -864,7 +869,7 @@ async function renderAdminDashboard() {
     `).join("") : '<p class="empty-admin">No jobs posted yet.</p>';
   }
 
-  // 2. Render Applications
+  // 2. Render Applications with core-matched buttons
   const appsList = document.querySelector("[data-applications]");
   if (appsList) {
     appsList.innerHTML = allAppsCache.length ? allAppsCache.map((a) => `
@@ -873,7 +878,7 @@ async function renderAdminDashboard() {
         <p>Email: ${escapeHtml(a.email)} | Phone: ${escapeHtml(a.phone)} · Applied: ${new Date(a.created_at).toLocaleDateString()}</p>
         <div class="application-actions">
           <div style="display:flex; gap:8px; align-items:center;">
-            <button type="button" class="btn-ctrl" onclick="viewApplicationModal('${a.id}')">View Details</button>
+            <button type="button" class="btn-ctrl btn-ctrl-primary" onclick="viewApplicationModal('${a.id}')">View Details</button>
             ${a.resume_path ? `<button type="button" class="btn-ctrl" onclick="viewResume('${a.resume_path}')">Download CV</button>` : ''}
           </div>
           <div style="display:flex; gap:10px; align-items:center;">
@@ -893,7 +898,7 @@ async function renderAdminDashboard() {
     `).join("") : '<p class="empty-admin">No applications received yet.</p>';
   }
 
-  // 3. Render Users (Candidates Only)
+  // 3. Render Users (Candidates Only) with core-matched buttons
   const usersList = document.querySelector("[data-admin-users]");
   if (usersList) {
     usersList.innerHTML = allUsersCache.length ? allUsersCache.map((u) => `
@@ -904,7 +909,7 @@ async function renderAdminDashboard() {
           <p style="font-size:12px; color:var(--muted); margin-top:2px;">Skills: ${escapeHtml(u.skills || 'None listed')} | Location: ${escapeHtml(u.preferred_location || 'Not set')}</p>
         </div>
         <div class="admin-item-actions">
-          <button class="btn-ctrl" onclick="editUser('${u.id}')">Edit</button>
+          <button class="btn-ctrl btn-ctrl-primary" onclick="editUser('${u.id}')">Edit</button>
           <button class="btn-ctrl" onclick="toggleUserBlock('${u.id}', ${u.is_blocked})">${u.is_blocked ? 'Unblock' : 'Block'}</button>
           <button class="btn-ctrl btn-ctrl-delete" onclick="deleteUser('${u.id}')">Delete</button>
         </div>
@@ -912,7 +917,7 @@ async function renderAdminDashboard() {
     `).join("") : '<p class="empty-admin">No registered candidate users found.</p>';
   }
 
-  // 4. Render Contact Inquiries
+  // 4. Render Contact Inquiries with core-matched buttons
   const inquiriesList = document.querySelector("[data-admin-inquiries]");
   if (inquiriesList) {
     inquiriesList.innerHTML = inquiries.length ? inquiries.map((m) => `
