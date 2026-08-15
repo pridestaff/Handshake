@@ -20,13 +20,18 @@ function showMessage(el, msg, isError = false) {
 }
 
 async function refreshCurrentUser() {
-  const { data, error } = await supabaseClient.auth.getUser();
-  currentUser = error ? null : data?.user;
-  
-  if (currentUser) {
-    const { data: profile } = await supabaseClient.from("profiles").select("*").eq("id", currentUser.id).maybeSingle();
-    currentProfile = profile;
-  } else {
+  try {
+    const { data, error } = await supabaseClient.auth.getUser();
+    currentUser = error ? null : data?.user;
+    
+    if (currentUser) {
+      const { data: profile } = await supabaseClient.from("profiles").select("*").eq("id", currentUser.id).maybeSingle();
+      currentProfile = profile;
+    } else {
+      currentProfile = null;
+    }
+  } catch (err) {
+    currentUser = null;
     currentProfile = null;
   }
   
@@ -79,7 +84,8 @@ function bindTagCloud(cloudContainer, targetInput) {
 function openAuthDialog(heading = "Sign in to your account") {
   const dialog = document.querySelector("[data-auth-dialog]");
   if (!dialog) return;
-  dialog.querySelector("[data-auth-heading]").textContent = heading;
+  const headingEl = dialog.querySelector("[data-auth-heading]");
+  if (headingEl) headingEl.textContent = heading;
   showMessage(dialog.querySelector(".form-message"), "");
   dialog.showModal();
 }
@@ -95,7 +101,7 @@ function setupAuthModal() {
   const signupFields = form.querySelector("[data-signup-fields]");
 
   const setMode = () => {
-    heading.textContent = isSignUp ? "Create your account" : "Sign in to apply";
+    heading.textContent = isSignUp ? "Create your account" : "Sign in to your account";
     submit.innerHTML = `${isSignUp ? "Create account" : "Sign in"} <span>→</span>`;
     toggle.textContent = isSignUp ? "Already have an account? Sign in" : "New here? Create an account";
     
@@ -171,7 +177,6 @@ function setupAuthModal() {
       form.reset();
       form.closest("dialog").close();
       
-      // Auto open the pre-filled apply modal after signing in/up
       if (pendingJobId) {
         openApplicationModal(pendingJobId, pendingJobTitle, pendingRedirectUrl);
       }
@@ -184,6 +189,61 @@ function setupAuthModal() {
   });
 }
 
+function openApplicationModal(jobId, jobTitle = null, redirectUrl = null) {
+  pendingJobId = jobId;
+  pendingJobTitle = jobTitle;
+  pendingRedirectUrl = redirectUrl;
+
+  const dialog = document.querySelector("[data-apply-dialog]");
+  if (!dialog) return;
+
+  const titleEl = dialog.querySelector("[data-application-title]");
+  if (titleEl) titleEl.textContent = jobTitle ? `Apply for ${jobTitle}` : "Apply for this role";
+  
+  dialog.querySelector('[name="jobId"]').value = jobId || "";
+  
+  const nameInput = dialog.querySelector('[name="name"]');
+  const emailInput = dialog.querySelector('[name="email"]');
+  const phoneInput = dialog.querySelector('[name="phone"]');
+  const resumeInput = dialog.querySelector('[name="resume"]');
+  const cvIndicator = document.getElementById("modal-cv-indicator");
+  const guestPasswordField = document.getElementById("guest-password-field");
+
+  if (currentUser) {
+    // Registered / Logged In Candidate
+    emailInput.value = currentUser.email || "";
+    emailInput.readOnly = true;
+    if (guestPasswordField) guestPasswordField.hidden = true;
+
+    if (currentProfile) {
+      nameInput.value = currentProfile.full_name || `${currentProfile.first_name || ''} ${currentProfile.last_name || ''}`.trim();
+      phoneInput.value = currentProfile.phone || "";
+
+      if (currentProfile.resume_path && cvIndicator) {
+        cvIndicator.hidden = false;
+        cvIndicator.className = "cv-present-badge";
+        cvIndicator.innerHTML = `✓ Active CV on file. (Upload file only to replace)`;
+        if (resumeInput) resumeInput.required = false;
+      } else {
+        if (cvIndicator) cvIndicator.hidden = true;
+        if (resumeInput) resumeInput.required = true;
+      }
+    }
+  } else {
+    // Non-Registered / Guest Candidate
+    emailInput.value = "";
+    emailInput.readOnly = false;
+    nameInput.value = "";
+    phoneInput.value = "";
+    if (guestPasswordField) guestPasswordField.hidden = false;
+    if (cvIndicator) cvIndicator.hidden = true;
+    if (resumeInput) resumeInput.required = true;
+  }
+
+  showMessage(dialog.querySelector(".form-message"), "");
+  dialog.showModal();
+}
+
 function setupApplicationModal() {
   const form = document.querySelector("[data-apply-form]");
   if (!form) return;
@@ -191,69 +251,104 @@ function setupApplicationModal() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const msg = form.querySelector(".form-message");
-    const user = await refreshCurrentUser();
-    if (!user) {
-      form.closest("dialog").close();
-      openAuthDialog("Sign in to submit your application");
-      return;
-    }
-
-    if (currentProfile?.is_blocked) {
-      showMessage(msg, "This account is suspended. Applications are disabled.", true);
-      return;
-    }
-
-    const file = form.elements.resume?.files?.[0];
-    let resumePath = currentProfile?.resume_path;
-
-    if (!file && !resumePath) {
-      showMessage(msg, "Please upload your résumé file to complete your application.", true);
-      return;
-    }
-
     const submitBtn = form.querySelector('[type="submit"]');
+
+    let activeUser = await refreshCurrentUser();
+    const candidateName = form.elements.name.value.trim();
+    const candidateEmail = form.elements.email.value.trim();
+    const candidatePhone = form.elements.phone.value.trim();
+    const candidateMessage = form.elements.message.value.trim();
+    const file = form.elements.resume?.files?.[0];
+    const guestPassword = form.elements.guest_password ? form.elements.guest_password.value : null;
+
     submitBtn.disabled = true;
+    showMessage(msg, "Processing your application...");
 
     try {
+      // 1. If not logged in, auto-create their account or sign up
+      if (!activeUser) {
+        if (!guestPassword || guestPassword.length < 6) {
+          throw new Error("Please create a password (at least 6 characters) for your candidate profile.");
+        }
+
+        const { data: authData, error: authErr } = await supabaseClient.auth.signUp({
+          email: candidateEmail,
+          password: guestPassword,
+          options: {
+            data: { full_name: candidateName, phone: candidatePhone }
+          }
+        });
+
+        if (authErr) throw authErr;
+        activeUser = authData?.user;
+
+        if (activeUser) {
+          await supabaseClient.from("profiles").upsert({
+            id: activeUser.id,
+            full_name: candidateName,
+            email: candidateEmail,
+            phone: candidatePhone,
+            role: "candidate"
+          });
+        }
+      }
+
+      const userId = activeUser ? activeUser.id : crypto.randomUUID();
+      let resumePath = currentProfile?.resume_path;
+
+      // 2. Upload Resume if provided
       if (file) {
         if (file.size > 5 * 1024 * 1024) throw new Error("Resume must be 5 MB or smaller.");
         const ext = file.name.split(".").pop().toLowerCase();
         if (!['pdf', 'doc', 'docx'].includes(ext)) throw new Error("Please upload a PDF or DOC/DOCX file.");
 
         showMessage(msg, "Uploading résumé securely...");
-        resumePath = `${user.id}/${Date.now()}.${ext}`;
+        resumePath = `${userId}/${Date.now()}.${ext}`;
         const { error: upErr } = await supabaseClient.storage.from("resumes").upload(resumePath, file, { upsert: true });
         if (upErr) throw upErr;
       }
 
-      await supabaseClient.from("profiles").update({
-        full_name: form.elements.name.value.trim(),
-        phone: form.elements.phone.value.trim(),
-        resume_path: resumePath
-      }).eq("id", user.id);
+      if (!resumePath) {
+        throw new Error("Please upload a résumé file to submit your application.");
+      }
 
+      // 3. Save Candidate Profile Updates
+      if (activeUser) {
+        await supabaseClient.from("profiles").update({
+          full_name: candidateName,
+          phone: candidatePhone,
+          resume_path: resumePath
+        }).eq("id", activeUser.id);
+      }
+
+      // 4. Insert Application Record
       const { error: appErr } = await supabaseClient.from("applications").insert({
         job_id: form.elements.jobId.value,
-        candidate_id: user.id,
-        full_name: form.elements.name.value.trim(),
-        email: user.email,
-        phone: form.elements.phone.value.trim(),
-        message: form.elements.message.value.trim() || null,
+        candidate_id: userId,
+        full_name: candidateName,
+        email: candidateEmail,
+        phone: candidatePhone,
+        message: candidateMessage || null,
         resume_path: resumePath,
         status: "received"
       });
 
       if (appErr && appErr.code !== "23505") throw appErr;
 
-      // Handle Redirection Workflow if present
+      await refreshCurrentUser();
+
+      // 5. Handle Redirection if set
       if (pendingRedirectUrl && pendingRedirectUrl.trim() !== "") {
         showMessage(msg, "Application submitted! Redirecting to the application portal...");
         setTimeout(() => {
           window.location.href = pendingRedirectUrl;
         }, 1200);
       } else {
-        showMessage(msg, "Application submitted successfully!");
-        setTimeout(() => { form.reset(); form.closest("dialog").close(); }, 1500);
+        showMessage(msg, "Application submitted successfully! Our team will review your CV.");
+        setTimeout(() => { 
+          form.reset(); 
+          form.closest("dialog").close(); 
+        }, 1800);
       }
     } catch (err) {
       showMessage(msg, err.message, true);
@@ -261,49 +356,6 @@ function setupApplicationModal() {
       submitBtn.disabled = false;
     }
   });
-}
-
-function openApplicationModal(jobId, jobTitle = null, redirectUrl = null) {
-  pendingJobId = jobId;
-  pendingJobTitle = jobTitle;
-  pendingRedirectUrl = redirectUrl;
-
-  // If user is not logged in / registered, open Auth modal first
-  if (!currentUser) {
-    openAuthDialog("Sign in or Register to Apply");
-    return;
-  }
-
-  const dialog = document.querySelector("[data-apply-dialog]");
-  if (!dialog) return;
-
-  dialog.querySelector("[data-application-title]").textContent = jobTitle ? `Apply for ${jobTitle}` : "Apply for this role";
-  dialog.querySelector('[name="jobId"]').value = jobId;
-  dialog.querySelector('[name="email"]').value = currentUser.email || "";
-  
-  // Pre-fill registered candidate details
-  const nameInput = dialog.querySelector('[name="name"]');
-  const phoneInput = dialog.querySelector('[name="phone"]');
-  const resumeInput = dialog.querySelector('[name="resume"]');
-  const cvIndicator = document.getElementById("modal-cv-indicator");
-
-  if (currentProfile) {
-    nameInput.value = currentProfile.full_name || `${currentProfile.first_name || ''} ${currentProfile.last_name || ''}`.trim();
-    phoneInput.value = currentProfile.phone || "";
-
-    if (currentProfile.resume_path && cvIndicator) {
-      cvIndicator.hidden = false;
-      cvIndicator.className = "cv-present-badge";
-      cvIndicator.innerHTML = `✓ Active CV on file. (Upload new file only to replace)`;
-      if (resumeInput) resumeInput.required = false;
-    } else {
-      if (cvIndicator) cvIndicator.hidden = true;
-      if (resumeInput) resumeInput.required = true;
-    }
-  }
-
-  showMessage(dialog.querySelector(".form-message"), "");
-  dialog.showModal();
 }
 
 async function toggleSaveJob(jobId, btn) {
@@ -417,8 +469,8 @@ async function initJobsPage() {
   const depts = [...new Set(allJobsCache.map((j) => j.department).filter(Boolean))];
   const locs = [...new Set(allJobsCache.map((j) => j.location).filter(Boolean))];
 
-  depts.forEach((d) => deptSelect.innerHTML += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`);
-  locs.forEach((l) => locSelect.innerHTML += `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`);
+  if (deptSelect) depts.forEach((d) => deptSelect.innerHTML += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`);
+  if (locSelect) locs.forEach((l) => locSelect.innerHTML += `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`);
 
   let activeFilterTag = "";
 
@@ -439,10 +491,10 @@ async function initJobsPage() {
   }
 
   const applyFilters = () => {
-    const q = searchInput.value.toLowerCase().trim();
-    const selDept = deptSelect.value;
-    const selLoc = locSelect.value;
-    const selType = typeSelect.value;
+    const q = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    const selDept = deptSelect ? deptSelect.value : "";
+    const selLoc = locSelect ? locSelect.value : "";
+    const selType = typeSelect ? typeSelect.value : "";
 
     const filtered = allJobsCache.filter((j) => {
       const fullText = `${j.title} ${j.department} ${j.location} ${j.description} ${j.requirements || ''} ${j.employment_type}`.toLowerCase();
@@ -542,7 +594,7 @@ async function initSingleJobPage() {
     btn.disabled = !job.is_open;
     btn.innerHTML = job.is_open ? "Apply Job <span>→</span>" : "Position Closed";
     if (job.is_open) {
-      btn.addEventListener("click", handleApplyAction);
+      btn.onclick = handleApplyAction;
     }
   });
 
