@@ -161,42 +161,188 @@ blockquote { margin: 12px auto 22px; max-width: 760px; font-family: var(--serif)
 .auth-form input { width: 100%; padding: 11px 12px; border: 1px solid #cfcfc7; color: var(--ink); outline-color: var(--peach); }
 .auth-toggle { justify-self: start; padding: 0; border: 0; border-bottom: 1px solid var(--ink); background: transparent; color: var(--ink); font-size: 13px; font-weight: 700; }
 
+.cv-present-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--cream);
+  border-left: 3px solid var(--peach);
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 500;
+  margin-top: -6px;
+  margin-bottom: 4px;
+}
+
 /* Admin Dashboard */
 .admin-body { background: #f4f5ef; }
 .admin-header { max-width: 1240px; margin: auto; padding: 23px 30px; display: flex; justify-content: space-between; align-items: center; }
 .admin-main { max-width: 1180px; margin: 35px auto 80px; padding: 0 30px; }
 .admin-intro { display: flex; justify-content: space-between; align-items: end; margin-bottom: 25px; }
 .admin-intro h1, .admin-gate h1 { font-size: 44px; margin: 0; }
-.admin-actions { display: flex; align-items: center; gap: 18px; }
-.admin-tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--line); margin-bottom: 25px; }
-.admin-tab-btn { padding: 10px 18px; border: 0; background: transparent; font-weight: 700; font-size: 14px; border-bottom: 3px solid transparent; color: var(--muted); }
-.admin-tab-btn.active { color: var(--ink); border-color: var(--peach); }
-.admin-tab-content { display: none; }
-.admin-tab-content.active { display: block; }
+.admin-actions { display: flex; align-items: center; gap: 14px; }
+
+/* Vertical Stack Container for Admin */
+.admin-vertical-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+}
+
+.vertical-section {
+  width: 100%;
+}
+
+.section-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--cream);
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.section-card-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-family: var(--sans);
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .admin-gate { max-width: 500px; padding: 24px 0; }
 .admin-gate > p:not(.eyebrow) { color: var(--muted); }
 .admin-login-form { max-width: 410px; margin-top: 30px; padding: 26px; display: grid; gap: 17px; background: white; border: 1px solid #e1e4dd; }
 .admin-login-form label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; }
 .admin-login-form input { width: 100%; padding: 11px 12px; border: 1px solid #cfcfc7; background: white; color: var(--ink); outline-color: var(--peach); }
-.admin-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 21px; }
-.admin-card { padding: 27px; background: white; border: 1px solid #e1e4dd; }
-.admin-card h2 { font-family: var(--sans); font-size: 17px; letter-spacing: 0; margin: 0 0 18px; }
+.admin-card { padding: 27px; background: white; border: 1px solid #e1e4dd; box-shadow: 0 2px 8px rgba(23, 59, 59, 0.04); }
 .admin-card h2 span { color: var(--muted); font-size: 13px; font-weight: 500; }
-.admin-job, .application { padding: 15px 0; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.admin-job, .application { padding: 16px 0; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .admin-job:first-child, .application:first-child { border-top: 0; }
-.admin-job h3, .application h3 { margin: 0; font-size: 15px; }
-.admin-job p, .application p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
-.delete-job { border: 0; background: transparent; color: #a54836; font-size: 12px; font-weight: 700; }
+.admin-job h3, .application h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--ink); }
+.admin-job p, .application p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
 .closed-label { margin-left: 6px; color: var(--muted); font-size: 11px; font-weight: 600; }
 .application { display: block; }
-.application-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 9px; }
-.application-actions button { padding: 0; border: 0; border-bottom: 1px solid var(--ink); background: transparent; color: var(--ink); font-size: 12px; font-weight: 700; }
-.application-actions label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; }
-.application-actions select { padding: 4px; border: 1px solid var(--line); background: white; color: var(--ink); font-size: 11px; }
+.application-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.application-actions label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.application-actions select { padding: 6px 10px; border: 1px solid var(--line); background: white; color: var(--ink); font-size: 12px; font-weight: 600; outline-color: var(--peach); }
 .empty-admin { color: var(--muted); font-size: 14px; }
 .job-form { display: grid; gap: 16px; padding: 30px; }
 .form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .form-message.is-error { color: #a54836; }
+
+/* Polished Core-Matched Action Buttons */
+.admin-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-ctrl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--sans);
+  border: 1px solid var(--ink);
+  background: white;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 1px;
+}
+
+.btn-ctrl:hover {
+  background: var(--ink);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.btn-ctrl-primary {
+  background: var(--ink);
+  color: white;
+}
+
+.btn-ctrl-primary:hover {
+  background: #245152;
+}
+
+.btn-ctrl-delete {
+  color: #a54836;
+  border-color: rgba(165, 72, 54, 0.4);
+  background: white;
+}
+
+.btn-ctrl-delete:hover {
+  background: #a54836;
+  color: white;
+  border-color: #a54836;
+}
+
+/* Single Job Page Styles */
+.job-single-header {
+  padding: 55px 0 45px;
+  border-bottom: 1px solid var(--line);
+  background: var(--cream);
+}
+
+.job-meta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 25px;
+}
+
+.job-meta-grid > div {
+  background: white;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  min-width: 140px;
+}
+
+.job-meta-grid strong {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--peach);
+  margin-bottom: 4px;
+}
+
+.job-meta-grid span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.job-single-content {
+  padding-top: 60px;
+  padding-bottom: 90px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 60px;
+  align-items: start;
+}
+
+.job-main-body h2 {
+  font-size: 26px;
+  margin-top: 0;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+}
+
+.job-sidebar-card {
+  background: white;
+  border: 1px solid var(--line);
+  padding: 32px;
+  position: sticky;
+  top: 30px;
+}
 
 @media (max-width: 860px) {
   .site-header { height: 70px; padding: 0 20px; position: relative; }
@@ -208,8 +354,12 @@ blockquote { margin: 12px auto 22px; max-width: 760px; font-family: var(--serif)
   .hero-art { min-height: 365px; }
   .filters-bar { grid-template-columns: 1fr; gap: 10px; }
   .section-wrap { padding-left: 24px; padding-right: 24px; }
-  .split-heading, .about-section, .contact-layout, .admin-grid { grid-template-columns: 1fr; gap: 27px; }
+  .split-heading, .about-section, .contact-layout { grid-template-columns: 1fr; gap: 27px; }
   .path-cards { grid-template-columns: 1fr; }
   .job-card { grid-template-columns: 1fr auto; gap: 8px 15px; }
   .site-footer { padding: 32px 24px; grid-template-columns: 1fr; gap: 15px; }
+  .job-single-content { grid-template-columns: 1fr; gap: 40px; }
+  .admin-main { padding: 0 16px; }
+  .admin-intro { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .admin-actions { width: 100%; justify-content: flex-start; }
 }
